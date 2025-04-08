@@ -1,0 +1,265 @@
+{
+  "resourceType": "StructureDefinition",
+  "url": "https://example.org/fhir/StructureDefinition/MyPatient",
+  "name": "MyPatient",
+  "status": "draft",
+  "fhirVersion": "4.0.1",
+  "kind": "resource",
+  "abstract": false,
+  "type": "Patient",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Patient",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Patient.identifier",
+        "path": "Patient.identifier",
+        "max": "0"
+      },
+      {
+        "id": "Patient.identifier.use",
+        "path": "Patient.identifier.use",
+        "max": "0"
+      },
+      {
+        "id": "Patient.identifier.type",
+        "path": "Patient.identifier.type",
+        "max": "0"
+      },
+      {
+        "id": "Patient.identifier.period",
+        "path": "Patient.identifier.period",
+        "max": "0"
+      },
+      {
+        "id": "Patient.identifier.assigner",
+        "path": "Patient.identifier.assigner",
+        "max": "0"
+      },
+      {
+        "id": "Patient.name",
+        "path": "Patient.name",
+        "min": 1,
+        "max": "1"
+      },
+      {
+        "id": "Patient.name.text",
+        "path": "Patient.name.text",
+        "max": "0"
+      },
+      {
+        "id": "Patient.name.given",
+        "path": "Patient.name.given",
+        "min": 1,
+        "max": "1"
+      },
+      {
+        "id": "Patient.name.prefix",
+        "path": "Patient.name.prefix",
+        "max": "0"
+      },
+      {
+        "id": "Patient.name.suffix",
+        "path": "Patient.name.suffix",
+        "max": "0"
+      },
+      {
+        "id": "Patient.name.period",
+        "path": "Patient.name.period",
+        "max": "0"
+      },
+      {
+        "id": "Patient.telecom.use",
+        "path": "Patient.telecom.use",
+        "max": "0"
+      },
+      {
+        "id": "Patient.telecom.rank",
+        "path": "Patient.telecom.rank",
+        "max": "0"
+      },
+      {
+        "id": "Patient.telecom.period",
+        "path": "Patient.telecom.period",
+        "max": "0"
+      },
+      {
+        "id": "Patient.gender",
+        "path": "Patient.gender",
+        "min": 1
+      },
+      {
+        "id": "Patient.birthDate",
+        "path": "Patient.birthDate",
+        "min": 1
+      },
+      {
+        "id": "Patient.address",
+        "path": "Patient.address",
+        "max": "1"
+      },
+      {
+        "id": "Patient.address.use",
+        "path": "Patient.address.use",
+        "min": 1
+      },
+      {
+        "id": "Patient.address.type",
+        "path": "Patient.address.type",
+        "max": "0"
+      },
+      {
+        "id": "Patient.address.text",
+        "path": "Patient.address.text",
+        "min": 1
+      },
+      {
+        "id": "Patient.address.line",
+        "path": "Patient.address.line",
+        "max": "0"
+      },
+      {
+        "id": "Patient.address.city",
+        "path": "Patient.address.city",
+        "min": 1
+      },
+      {
+        "id": "Patient.address.district",
+        "path": "Patient.address.district",
+        "max": "0"
+      },
+      {
+        "id": "Patient.address.state",
+        "path": "Patient.address.state",
+        "min": 1
+      },
+      {
+        "id": "Patient.address.postalCode",
+        "path": "Patient.address.postalCode",
+        "min": 1
+      },
+      {
+        "id": "Patient.address.country",
+        "path": "Patient.address.country",
+        "max": "0"
+      },
+      {
+        "id": "Patient.address.period",
+        "path": "Patient.address.period",
+        "max": "0"
+      },
+      {
+        "id": "Patient.maritalStatus",
+        "path": "Patient.maritalStatus",
+        "max": "0"
+      },
+      {
+        "id": "Patient.multipleBirth[x]",
+        "path": "Patient.multipleBirth[x]",
+        "max": "0"
+      },
+      {
+        "id": "Patient.photo",
+        "path": "Patient.photo",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact",
+        "path": "Patient.contact",
+        "max": "1"
+      },
+      {
+        "id": "Patient.contact.relationship",
+        "path": "Patient.contact.relationship",
+        "max": "1"
+      },
+      {
+        "id": "Patient.contact.name",
+        "path": "Patient.contact.name",
+        "min": 1
+      },
+      {
+        "id": "Patient.contact.telecom",
+        "path": "Patient.contact.telecom",
+        "min": 1,
+        "max": "1"
+      },
+      {
+        "id": "Patient.contact.telecom.use",
+        "path": "Patient.contact.telecom.use",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact.telecom.rank",
+        "path": "Patient.contact.telecom.rank",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact.telecom.period",
+        "path": "Patient.contact.telecom.period",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact.address",
+        "path": "Patient.contact.address",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact.gender",
+        "path": "Patient.contact.gender",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact.organization",
+        "path": "Patient.contact.organization",
+        "max": "0"
+      },
+      {
+        "id": "Patient.contact.period",
+        "path": "Patient.contact.period",
+        "max": "0"
+      },
+      {
+        "id": "Patient.communication",
+        "path": "Patient.communication",
+        "max": "0"
+      },
+      {
+        "id": "Patient.communication.language.coding",
+        "path": "Patient.communication.language.coding",
+        "min": 1,
+        "max": "1"
+      },
+      {
+        "id": "Patient.communication.language.coding.version",
+        "path": "Patient.communication.language.coding.version",
+        "max": "0"
+      },
+      {
+        "id": "Patient.communication.language.coding.userSelected",
+        "path": "Patient.communication.language.coding.userSelected",
+        "max": "0"
+      },
+      {
+        "id": "Patient.communication.language.text",
+        "path": "Patient.communication.language.text",
+        "min": 1
+      },
+      {
+        "id": "Patient.generalPractitioner",
+        "path": "Patient.generalPractitioner",
+        "max": "0"
+      },
+      {
+        "id": "Patient.managingOrganization",
+        "path": "Patient.managingOrganization",
+        "max": "0"
+      },
+      {
+        "id": "Patient.link",
+        "path": "Patient.link",
+        "max": "0"
+      }
+    ]
+  }
+}
