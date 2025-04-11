@@ -1,19 +1,28 @@
 package com.example.demo;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.*;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Patient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Service;
 
+@Service
 public class PatientResourceProvider implements IResourceProvider {
-    private MongoOperations mongoOperations;
-    private Validator validator;
-    private FhirContext fhirContext;
+    private final JsonParser jsonParser;
+    private final MongoTemplate mongoTemplate;
 
+    public PatientResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
+        super();
+        this.jsonParser = jsonParser;
+        this.mongoTemplate = mongoTemplate;
+    }
     @Override
     public Class<Patient> getResourceType() {
         return Patient.class;
@@ -22,17 +31,16 @@ public class PatientResourceProvider implements IResourceProvider {
 
     @Create
     public MethodOutcome addPatient(@ResourceParam Patient thePatient){
-        validatePatient(thePatient);
+//        TODO(Gestionar dar identificadores aleatorios únicos)
         MethodOutcome methodOutcome = new MethodOutcome();
         OperationOutcome operationOutcome = new OperationOutcome();
         try {
-            String patientJson = fhirContext.newJsonParser().encodeResourceToString(thePatient);
+            String patientJson = jsonParser.encodeResourceToString(thePatient);
             Document patientDoc = Document.parse(patientJson);
-            mongoOperations.insert(patientDoc, "patient");
+            mongoTemplate.save(patientDoc, "patient");
             operationOutcome.addIssue()
                     .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
                     .setDiagnostics("Paciente creado correctamente");
-
             methodOutcome.setOperationOutcome(operationOutcome);
             methodOutcome.setCreated(true);
             methodOutcome.setResource(thePatient);
@@ -49,7 +57,6 @@ public class PatientResourceProvider implements IResourceProvider {
             methodOutcome.setOperationOutcome(operationOutcome);
             methodOutcome.setCreated(false);
         }
-
         return methodOutcome;
     }
 //
@@ -81,25 +88,26 @@ public class PatientResourceProvider implements IResourceProvider {
 //        return null;
 //    }
 
-    @Validate
-    public OperationOutcome validatePatient(@ResourceParam Patient thePatient) {
-        try {
-            return validator.validatePatientResource(thePatient);
-        } catch (ValidationException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+//    @Validate
+//    public Patient validatePatient(@ResourceParam Patient thePatient) {
+//        try {
+//            ValidationResult validationResult =  patientValidator.validatePatientResource(thePatient);
+//            if (!validationResult.isSuccessful()){
+//                return null;
+//            } else if (validationResult.isSuccessful()){
+//                return thePatient;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
 
-    public void setMongoOperations(MongoOperations mongoOperations) {
-        this.mongoOperations = mongoOperations;
-    }
+//    public void setValidator(PatientValidator patientValidator) {
+//        this.patientValidator = patientValidator;
+//    }
 
-    public void setValidator(Validator validator) {
-        this.validator = validator;
-    }
-
-    public void setFhirContext(FhirContext fhirContext) {
-        this.fhirContext = fhirContext;
-    }
+//    public void setFhirContext(FhirContext fhirContext) {
+//        this.fhirContext = fhirContext;
+//    }
 }

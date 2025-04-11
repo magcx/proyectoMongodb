@@ -14,17 +14,28 @@
       {
         "id": "Patient.identifier",
         "path": "Patient.identifier",
-        "max": "0"
+        "min": 1,
+        "max": "1",
+        "fixedIdentifier": {
+          "use": "usual"
+        }
       },
       {
         "id": "Patient.identifier.use",
         "path": "Patient.identifier.use",
-        "max": "0"
+        "min": 1,
+        "fixedCode": "usual"
       },
       {
         "id": "Patient.identifier.type",
         "path": "Patient.identifier.type",
         "max": "0"
+      },
+      {
+        "id": "Patient.identifier.value",
+        "path": "Patient.identifier.value",
+        "min": 1,
+        "fixedString": "identificadorUnico"
       },
       {
         "id": "Patient.identifier.period",
@@ -35,6 +46,11 @@
         "id": "Patient.identifier.assigner",
         "path": "Patient.identifier.assigner",
         "max": "0"
+      },
+      {
+        "id": "Patient.active",
+        "path": "Patient.active",
+        "min": 1
       },
       {
         "id": "Patient.name",
