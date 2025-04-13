@@ -66,12 +66,20 @@ JsonParser jsonParser;
         return null;
     }
 
-//    public OperationOutcome deletePatient (IdType theId){
-//        Criteria criteria = Criteria.where("id").is(theId.getIdPart());
-//        mongoTemplate.remove(new Query(criteria),"patient");
-//        OperationOutcome operationOutcome = new OperationOutcome();
-//        operationOutcome.addIssue().
-//    }
+    public OperationOutcome deletePatient (IdType theId){
+        OperationOutcome operationOutcome = new OperationOutcome();
+        Criteria criteria = Criteria.where("id").is(theId.getIdPart());
+        long isDeleted = (mongoTemplate.remove(new Query(criteria),"patient")).getDeletedCount();
+        if (isDeleted == 0){
+            operationOutcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR)
+                    .setDiagnostics("No se pudo eliminar el patient con id: " + theId.getIdPart());
+            return operationOutcome;
+        }
+        operationOutcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                .setCode(OperationOutcome.IssueType.DELETED)
+                .setDiagnostics("Paciente eliminado correctamente");
+        return operationOutcome;
+    }
 
     public String patientExist(Patient thePatient){
         String identifierSystem = thePatient.getIdentifierFirstRep().getSystem();

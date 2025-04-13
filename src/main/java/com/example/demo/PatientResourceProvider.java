@@ -92,15 +92,16 @@ public class PatientResourceProvider implements IResourceProvider {
         }
         return methodOutcome;
     }
-//
-//    @Delete
-//    public MethodOutcome deletePatient(@IdParam IdType patientId){
-//        MethodOutcome outcome = new MethodOutcome();
-//
-//        outcome.setCreated(false); // Este es un borrado, no creación.
-//        outcome.setId(patientId);  // Establece el ID del paciente eliminado
-//        return outcome;
-//    }
+
+    @Delete
+    public MethodOutcome deletePatient(@IdParam IdType theId){
+        MethodOutcome methodOutcome = new MethodOutcome();
+        methodOutcome.setOperationOutcome(patientRepository.deletePatient(theId));
+        methodOutcome.setCreated(false);
+        methodOutcome.setId(theId);
+        return methodOutcome;
+    }
+
 //
 //    @Patch
 //    public OperationOutcome updatePatient(){
