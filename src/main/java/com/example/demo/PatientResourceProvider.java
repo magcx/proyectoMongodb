@@ -4,12 +4,17 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.*;
+import com.mongodb.client.result.UpdateResult;
+import org.apache.http.HttpStatus;
+import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Patient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import repository.PatientRepository;
+
+import java.util.function.Supplier;
 
 @Service
 public class PatientResourceProvider implements IResourceProvider {
@@ -28,50 +33,70 @@ public class PatientResourceProvider implements IResourceProvider {
         return Patient.class;
     }
 
-    //CRUD
-    //        TODO(Gestionar dar identificadores aleatorios únicos)
-//        TODO (custom MethodOutcomes para simplificar código)
+//CRUD
+//   TODO(Gestionar dar identificadores aleatorios únicos)
+//   TODO (custom MethodOutcomes para simplificar código)
+//   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
-    public MethodOutcome createPatient(@ResourceParam Patient thePatient){
+    public MethodOutcome createPatient(@ResourceParam Patient thePatient) {
         MethodOutcome methodOutcome = new MethodOutcome();
         OperationOutcome operationOutcome = new OperationOutcome();
-        if (thePatient.getIdentifier().isEmpty()){
+        if (thePatient.getIdentifier().isEmpty()) {
             operationOutcome.addIssue()
                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
                     .setCode(OperationOutcome.IssueType.REQUIRED)
                     .setDiagnostics("Identificador requerido");
             methodOutcome.setOperationOutcome(operationOutcome);
             methodOutcome.setCreated(false);
-        } else {
-            MethodOutcome patientId = patientRepository.createPatient(thePatient);
-            if (patientId.getId() != null) {
-                methodOutcome.setCreated(true);
-                methodOutcome.setId(patientId.getId());
-                System.out.println(methodOutcome.getId().toString());
-            } else {
-                operationOutcome.addIssue()
-                        .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                        .setDiagnostics("Error agregando paciente a la base de datos: ");
-                methodOutcome.setOperationOutcome(operationOutcome);
-                methodOutcome.setCreated(false);
-            }
+            return methodOutcome;
+        }
+        Patient patientSaved = patientRepository.createPatient(thePatient);
+        if (patientSaved != null) {
+            operationOutcome.addIssue()
+                    .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                    .setDiagnostics("Paciente creado correctamente");
+            methodOutcome.setOperationOutcome(operationOutcome);
+            methodOutcome.setCreated(true);
+            methodOutcome.setResource(patientSaved);
+            methodOutcome.setId(new IdType("Patient", thePatient.getIdElement().getIdPart()));
         }
         return methodOutcome;
     }
 
+//   OK
     @Read()
     public Patient readPatient(@IdParam IdType theId){
         return patientRepository.readPatient(theId);
     }
 
+//    OK
     @Update
-    public OperationOutcome updatePatient(@ResourceParam Patient thePatient){
-        return null;
+    public MethodOutcome updatePatient(@IdParam IdType theId,@ResourceParam Patient thePatient){
+        OperationOutcome operationOutcome = new OperationOutcome();
+        MethodOutcome methodOutcome = new MethodOutcome();
+        Patient patientUpdated = patientRepository.updatePatient(thePatient);
+        if (patientUpdated == null) {
+            operationOutcome.addIssue()
+                .setSeverity(OperationOutcome.IssueSeverity.ERROR)
+                .setDiagnostics("Error actualizando paciente");
+            methodOutcome.setOperationOutcome(operationOutcome);
+            methodOutcome.setCreated(false);
+        } else {
+            operationOutcome.addIssue()
+                    .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
+                    .setDiagnostics("Paciente actualizado correctamente");
+            methodOutcome.setOperationOutcome(operationOutcome);
+            methodOutcome.setCreated(true);
+            methodOutcome.setResource(patientUpdated);
+            methodOutcome.setId(new IdType("Patient", thePatient.getIdElement().getIdPart()));
+        }
+        return methodOutcome;
     }
-
+//
 //    @Delete
 //    public MethodOutcome deletePatient(@IdParam IdType patientId){
 //        MethodOutcome outcome = new MethodOutcome();
+//
 //        outcome.setCreated(false); // Este es un borrado, no creación.
 //        outcome.setId(patientId);  // Establece el ID del paciente eliminado
 //        return outcome;
