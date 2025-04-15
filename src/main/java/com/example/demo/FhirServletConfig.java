@@ -38,7 +38,7 @@ public class FhirServletConfig {
         return (JsonParser) fhirContext.newJsonParser();
     }
 
-//    TODO(Validacion SNOMED CT snowstorm)
+    //    TODO(Notificaciones Validacion SNOMED CT snowstorm)
     @Bean
     public FhirValidator fhirValidator() {
         FhirContext ctx = fhirContext();
@@ -63,7 +63,7 @@ public class FhirServletConfig {
     ) {
         restfulServer.registerInterceptor(new InterceptorLogging());
         restfulServer.setProviders(new PatientResourceProvider(fhirJsonParser(fhirContext),
-                                                                mongoTemplate(mongoDatabaseFactory(mongoProperties))));
+                mongoTemplate(mongoDatabaseFactory(mongoProperties))));
         ServletRegistrationBean<RestfulServer> servletRegistrationBean = new ServletRegistrationBean<>(restfulServer,
                 "/fhir/*");
         servletRegistrationBean.setName("fhirServlet");

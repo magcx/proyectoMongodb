@@ -30,6 +30,7 @@ JsonParser jsonParser;
         this.jsonParser = jsonParser;
     }
 
+//TODO (Devuelve 201 con duplicados)
     public Patient createPatient(Patient thePatient){
         if (patientExist(thePatient) != null) {
             return null;
@@ -39,7 +40,7 @@ JsonParser jsonParser;
         }
         Document patientDoc = Document.parse(jsonParser.encodeResourceToString(thePatient));
         return jsonParser.parseResource(Patient.class,
-                ((mongoTemplate.save(patientDoc, "patient")).toString()));
+                ((mongoTemplate.save(patientDoc, "patient")).toJson()));
     }
 
 //    TODO(El return)

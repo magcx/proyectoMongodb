@@ -4,6 +4,7 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.*;
+import ca.uhn.fhir.validation.FhirValidator;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.http.HttpStatus;
 import org.bson.Document;
@@ -34,8 +35,8 @@ public class PatientResourceProvider implements IResourceProvider {
     }
 
 //CRUD
-//   TODO(Gestionar dar identificadores aleatorios únicos)
 //   TODO (custom MethodOutcomes para simplificar código)
+//TODO(Validación manual para que no entre en el método)
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
     public MethodOutcome createPatient(@ResourceParam Patient thePatient) {
@@ -115,6 +116,7 @@ public class PatientResourceProvider implements IResourceProvider {
 
 //    @Validate
 //    public Patient validatePatient(@ResourceParam Patient thePatient) {
+//        FhirValidator validator =
 //        try {
 //            ValidationResult validationResult =  patientValidator.validatePatientResource(thePatient);
 //            if (!validationResult.isSuccessful()){
