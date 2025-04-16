@@ -1,5 +1,8 @@
-package com.example.demo;
+package com.example.demo.config;
 
+import com.example.demo.service.ObservationResourceProvider;
+import com.example.demo.service.PatientResourceProvider;
+import com.example.demo.interceptor.InterceptorLogging;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
 import ca.uhn.fhir.parser.JsonParser;
@@ -34,11 +37,12 @@ public class FhirServletConfig {
         return FhirContext.forR4();
     }
     @Bean
-    public JsonParser fhirJsonParser(FhirContext fhirContext) {
+    public JsonParser jsonParser(FhirContext fhirContext) {
         return (JsonParser) fhirContext.newJsonParser();
     }
 
     //    TODO(Notificaciones Validacion SNOMED CT snowstorm)
+//    TODO(Upload valuesets and codesystems?)
     @Bean
     public FhirValidator fhirValidator() {
         FhirContext ctx = fhirContext();
@@ -47,7 +51,9 @@ public class FhirServletConfig {
                 new DefaultProfileValidationSupport(ctx), //Validación de StructureDefinition
                 new SnapshotGeneratingValidationSupport(ctx), //Validación y generación de perfiles
                 new CommonCodeSystemsTerminologyService(ctx), //Validación de CodeSystem
-                new InMemoryTerminologyServerValidationSupport(ctx) //Validación de CodeSystem y ValueSet desde la memoria
+                new RemoteTerminologyServiceValidationSupport(ctx, "http://localhost:8080/fhir"),
+                new InMemoryTerminologyServerValidationSupport(ctx), //Validación de CodeSystem y ValueSet desde la memoria
+                new UnknownCodeSystemWarningValidationSupport(ctx)
         );
         CachingValidationSupport cachingValidationSupport = new CachingValidationSupport(validationSupportChain);
         //Contenedor de la estructura del validador
@@ -59,11 +65,15 @@ public class FhirServletConfig {
     }
 
     @Bean
-    public ServletRegistrationBean<RestfulServer> fhirServletRegistration(RestfulServer restfulServer, FhirContext fhirContext, MongoProperties mongoProperties
+    public ServletRegistrationBean<RestfulServer> fhirServletRegistration(RestfulServer restfulServer,
+                                                              FhirContext fhirContext, MongoProperties mongoProperties,
+                                                              FhirValidator fhirValidator, JsonParser jsonParser,
+                                                              MongoTemplate mongoTemplate
     ) {
         restfulServer.registerInterceptor(new InterceptorLogging());
-        restfulServer.setProviders(new PatientResourceProvider(fhirJsonParser(fhirContext),
-                mongoTemplate(mongoDatabaseFactory(mongoProperties))));
+        restfulServer.setProviders(new ObservationResourceProvider(jsonParser, mongoTemplate, fhirValidator),
+                new PatientResourceProvider(jsonParser,
+                mongoTemplate, fhirValidator));
         ServletRegistrationBean<RestfulServer> servletRegistrationBean = new ServletRegistrationBean<>(restfulServer,
                 "/fhir/*");
         servletRegistrationBean.setName("fhirServlet");

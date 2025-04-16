@@ -1,9 +1,6 @@
-package repository;
+package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
-import ca.uhn.fhir.rest.annotation.ResourceParam;
-import ca.uhn.fhir.rest.api.MethodOutcome;
-import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -11,13 +8,9 @@ import org.hl7.fhir.r4.model.Patient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.data.mongodb.core.query.UpdateDefinition;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
-
-import static org.hl7.fhir.r4.model.IdType.newRandomUuid;
 
 @Repository
 public class PatientRepository {

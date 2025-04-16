@@ -1,32 +1,30 @@
-package com.example.demo;
+package com.example.demo.service;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.server.*;
 import ca.uhn.fhir.validation.FhirValidator;
-import com.mongodb.client.result.UpdateResult;
-import org.apache.http.HttpStatus;
-import org.bson.Document;
+import ca.uhn.fhir.validation.ValidationResult;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Patient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
-import repository.PatientRepository;
-
-import java.util.function.Supplier;
+import com.example.demo.repository.PatientRepository;
 
 @Service
 public class PatientResourceProvider implements IResourceProvider {
     private final JsonParser jsonParser;
     private final MongoTemplate mongoTemplate;
     private final PatientRepository patientRepository;
+    private final FhirValidator fhirValidator;
 
-    public PatientResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
+    public PatientResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate, FhirValidator fhirValidator) {
         super();
         this.jsonParser = jsonParser;
         this.mongoTemplate = mongoTemplate;
+        this.fhirValidator = fhirValidator;
         this.patientRepository = new PatientRepository(mongoTemplate, jsonParser);
     }
     @Override
@@ -42,7 +40,12 @@ public class PatientResourceProvider implements IResourceProvider {
     public MethodOutcome createPatient(@ResourceParam Patient thePatient) {
         MethodOutcome methodOutcome = new MethodOutcome();
         OperationOutcome operationOutcome = new OperationOutcome();
-        if (thePatient.getIdentifier().isEmpty()) {
+        Patient validatedPatient = validatePatient(thePatient);
+        if (validatedPatient == null){
+            methodOutcome.setCreated(false);
+            return methodOutcome;
+        }
+        if (validatedPatient.getIdentifier().isEmpty()) {
             operationOutcome.addIssue()
                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
                     .setCode(OperationOutcome.IssueType.REQUIRED)
@@ -51,7 +54,8 @@ public class PatientResourceProvider implements IResourceProvider {
             methodOutcome.setCreated(false);
             return methodOutcome;
         }
-        Patient patientSaved = patientRepository.createPatient(thePatient);
+        System.out.println("Paciente validado");
+        Patient patientSaved = patientRepository.createPatient(validatedPatient);
         if (patientSaved != null) {
             operationOutcome.addIssue()
                     .setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
@@ -59,7 +63,7 @@ public class PatientResourceProvider implements IResourceProvider {
             methodOutcome.setOperationOutcome(operationOutcome);
             methodOutcome.setCreated(true);
             methodOutcome.setResource(patientSaved);
-            methodOutcome.setId(new IdType("Patient", thePatient.getIdElement().getIdPart()));
+            methodOutcome.setId(new IdType("Patient", patientSaved.getIdElement().getIdPart()));
         }
         return methodOutcome;
     }
@@ -113,28 +117,13 @@ public class PatientResourceProvider implements IResourceProvider {
 //    public OperationOutcome searchPatient(){
 //        return null;
 //    }
-
-//    @Validate
-//    public Patient validatePatient(@ResourceParam Patient thePatient) {
-//        FhirValidator validator =
-//        try {
-//            ValidationResult validationResult =  patientValidator.validatePatientResource(thePatient);
-//            if (!validationResult.isSuccessful()){
-//                return null;
-//            } else if (validationResult.isSuccessful()){
-//                return thePatient;
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-
-//    public void setValidator(PatientValidator patientValidator) {
-//        this.patientValidator = patientValidator;
-//    }
-
-//    public void setFhirContext(FhirContext fhirContext) {
-//        this.fhirContext = fhirContext;
-//    }
+    @Validate
+    public Patient validatePatient(@ResourceParam Patient thePatient) {
+        ValidationResult validationResult = fhirValidator.validateWithResult(thePatient);
+        if (!validationResult.isSuccessful()){
+            System.out.println("Paciente NO validado");
+            return null;
+        }
+        return thePatient;
+    }
 }

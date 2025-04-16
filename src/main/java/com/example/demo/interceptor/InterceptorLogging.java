@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.interceptor;
 
 import ca.uhn.fhir.interceptor.api.*;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
