@@ -7,6 +7,6 @@ import org.springframework.stereotype.Component;
 public class FHIRServer extends RestfulServer {
     @Override
     protected void initialize() {
-
+//   TODO(     DUDAS Qué meto aquí?)
     }
 }

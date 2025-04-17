@@ -1,10 +1,12 @@
 package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Patient;
+import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -12,10 +14,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
+//NO SE PUEDEN guardar objetos HAPI FHIR porque Mongo los parsea y se quedan inútiles
 @Repository
 public class PatientRepository {
-MongoTemplate mongoTemplate;
-JsonParser jsonParser;
+    MongoTemplate mongoTemplate;
+    JsonParser jsonParser;
 
 //TODO(Encriptar datos sensibles)
     public PatientRepository(MongoTemplate mongoTemplate, JsonParser jsonParser) {
@@ -23,20 +26,18 @@ JsonParser jsonParser;
         this.jsonParser = jsonParser;
     }
 
-//TODO (Devuelve 201 con duplicados)
-    public Patient createPatient(Patient thePatient){
-        if (patientExist(thePatient) != null) {
-            return null;
+    public MethodOutcome createPatient(Patient thePatient){
+        thePatient.setId(UUID.randomUUID().toString());  //Se lo toma como que no tiene id
+        if (patientFound(thePatient) != null) {
+            OperationOutcome operationOutcome = new OperationOutcome();
+            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE);
+            return new MethodOutcome(thePatient.getIdElement(), operationOutcome, false);
         }
-        if(!thePatient.hasId()){
-             thePatient.setId(UUID.randomUUID().toString());
-        }
-        Document patientDoc = Document.parse(jsonParser.encodeResourceToString(thePatient));
-        return jsonParser.parseResource(Patient.class,
-                ((mongoTemplate.save(patientDoc, "patient")).toJson()));
+        mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(thePatient)),
+                "patient");
+        return new MethodOutcome().setCreated(true).setResource(thePatient).setId(thePatient.getIdElement());
     }
 
-//    TODO(El return)
     public Patient readPatient(IdType theId) {
         System.out.println(theId.getIdPart());
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
@@ -47,35 +48,32 @@ JsonParser jsonParser;
         return null;
     }
 
-    public Patient updatePatient(Patient thePatient){
-        Criteria criteria = Criteria.where("id").is(thePatient.getIdPart());
+    public Patient updatePatient(IdType theId, Patient thePatient){
+        Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         Document patientDoc = Document.parse(jsonParser.encodeResourceToString(thePatient));
-        if (mongoTemplate.findAndReplace(new Query(criteria),
-                patientDoc,
-                "patient") != null){
-            return jsonParser.parseResource(Patient.class, (mongoTemplate.findAndReplace(new Query(criteria),
-                    patientDoc,
-                    "patient")).toJson());
+        FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
+        Document updatedDoc = mongoTemplate.findAndReplace(new Query(criteria), patientDoc, options,
+                "patient");
+        if (updatedDoc == null) {
+            System.out.println("No se puede actualizar el patient");
+            return null;
         }
-        return null;
+        return jsonParser.parseResource(Patient.class, updatedDoc.toJson());
     }
 
-    public OperationOutcome deletePatient (IdType theId){
+    public MethodOutcome deletePatient(IdType theId){
         OperationOutcome operationOutcome = new OperationOutcome();
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         long isDeleted = (mongoTemplate.remove(new Query(criteria),"patient")).getDeletedCount();
         if (isDeleted == 0){
             operationOutcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.ERROR)
                     .setDiagnostics("No se pudo eliminar el patient con id: " + theId.getIdPart());
-            return operationOutcome;
+            return new MethodOutcome(operationOutcome);
         }
-        operationOutcome.addIssue().setSeverity(OperationOutcome.IssueSeverity.INFORMATION)
-                .setCode(OperationOutcome.IssueType.DELETED)
-                .setDiagnostics("Paciente eliminado correctamente");
-        return operationOutcome;
+        return new MethodOutcome().setId(theId);
     }
 
-    public String patientExist(Patient thePatient){
+    public String patientFound(Patient thePatient){
         String identifierSystem = thePatient.getIdentifierFirstRep().getSystem();
         String identifierValue = thePatient.getIdentifierFirstRep().getValue();
         Criteria criteria = Criteria.where("identifier").elemMatch(
