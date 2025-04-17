@@ -2,6 +2,7 @@ package com.example.demo.config;
 
 import com.example.demo.controller.CarePlanResourceProvider;
 import com.example.demo.controller.ObservationResourceProvider;
+import com.example.demo.controller.PractitionerRoleResourceProvider;
 import com.example.demo.service.ObservationService;
 import com.example.demo.controller.PatientResourceProvider;
 import com.example.demo.interceptor.InterceptorLogging;
@@ -73,10 +74,10 @@ public class FhirServletConfig {
                                                               MongoTemplate mongoTemplate
     ) {
         restfulServer.registerInterceptor(new InterceptorLogging());
-        restfulServer.setProviders(new CarePlanResourceProvider(jsonParser,
-                        mongoTemplate, fhirValidator),new ObservationResourceProvider(jsonParser, mongoTemplate, fhirValidator),
-                new PatientResourceProvider(jsonParser,
-                mongoTemplate, fhirValidator));
+        restfulServer.setProviders( new PractitionerRoleResourceProvider(jsonParser, mongoTemplate, fhirValidator),
+                new CarePlanResourceProvider(jsonParser, mongoTemplate, fhirValidator),
+                new ObservationResourceProvider(jsonParser, mongoTemplate, fhirValidator),
+                new PatientResourceProvider(jsonParser, mongoTemplate, fhirValidator));
         ServletRegistrationBean<RestfulServer> servletRegistrationBean = new ServletRegistrationBean<>(restfulServer,
                 "/fhir/*");
         servletRegistrationBean.setName("fhirServlet");
