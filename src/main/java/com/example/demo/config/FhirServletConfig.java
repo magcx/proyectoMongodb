@@ -1,10 +1,6 @@
 package com.example.demo.config;
 
-import com.example.demo.controller.CarePlanResourceProvider;
-import com.example.demo.controller.ObservationResourceProvider;
-import com.example.demo.controller.PractitionerRoleResourceProvider;
-import com.example.demo.service.ObservationService;
-import com.example.demo.controller.PatientResourceProvider;
+import com.example.demo.controller.*;
 import com.example.demo.interceptor.InterceptorLogging;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
@@ -39,6 +35,7 @@ public class FhirServletConfig {
     public FhirContext fhirContext() {
         return FhirContext.forR4();
     }
+
     @Bean
     public JsonParser jsonParser(FhirContext fhirContext) {
         return (JsonParser) fhirContext.newJsonParser();
@@ -69,12 +66,13 @@ public class FhirServletConfig {
 
     @Bean
     public ServletRegistrationBean<RestfulServer> fhirServletRegistration(RestfulServer restfulServer,
-                                                              FhirContext fhirContext, MongoProperties mongoProperties,
-                                                              FhirValidator fhirValidator, JsonParser jsonParser,
-                                                              MongoTemplate mongoTemplate
+                                                                          FhirContext fhirContext, MongoProperties mongoProperties,
+                                                                          FhirValidator fhirValidator, JsonParser jsonParser,
+                                                                          MongoTemplate mongoTemplate
     ) {
         restfulServer.registerInterceptor(new InterceptorLogging());
-        restfulServer.setProviders( new PractitionerRoleResourceProvider(jsonParser, mongoTemplate, fhirValidator),
+        restfulServer.setProviders(new ProcedureResourceProvider(jsonParser, mongoTemplate, fhirValidator),
+                new PractitionerRoleResourceProvider(jsonParser, mongoTemplate, fhirValidator),
                 new CarePlanResourceProvider(jsonParser, mongoTemplate, fhirValidator),
                 new ObservationResourceProvider(jsonParser, mongoTemplate, fhirValidator),
                 new PatientResourceProvider(jsonParser, mongoTemplate, fhirValidator));
