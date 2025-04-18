@@ -23,9 +23,9 @@ public class PatientService {
             return patientRepository.createPatient(thePatient);
      }
 
-    public Patient readPatient(IdType theId) {
+     public Patient readPatient(IdType theId) {
          return patientRepository.readPatient(theId);
-    }
+     }
 
      public MethodOutcome updatePatient(IdType theId, Patient thePatient) {
          OperationOutcome operationOutcome = new OperationOutcome();

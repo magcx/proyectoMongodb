@@ -10,8 +10,9 @@ import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.PractitionerRole;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class PractitionerRoleResourceProvider implements IResourceProvider {
     private final JsonParser jsonParser;
     private final MongoTemplate mongoTemplate;

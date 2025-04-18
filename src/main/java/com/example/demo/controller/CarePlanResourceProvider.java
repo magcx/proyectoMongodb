@@ -11,8 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Controller;
 import com.example.demo.service.*;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class CarePlanResourceProvider implements IResourceProvider {
     private final JsonParser jsonParser;
     private final MongoTemplate mongoTemplate;

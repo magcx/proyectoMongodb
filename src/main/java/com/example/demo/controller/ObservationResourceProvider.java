@@ -10,8 +10,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Controller;
 import com.example.demo.repository.*;
 import com.example.demo.service.*;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class ObservationResourceProvider implements IResourceProvider {
     private final JsonParser jsonParser;
     private final MongoTemplate mongoTemplate;
