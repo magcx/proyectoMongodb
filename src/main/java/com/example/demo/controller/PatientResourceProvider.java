@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.*;
 import com.example.demo.repository.PatientRepository;
 import org.hl7.fhir.r4.model.IdType;
@@ -35,8 +36,8 @@ public class PatientResourceProvider implements IResourceProvider {
     //CRUD
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
-    public MethodOutcome createPatient(@ResourceParam Patient thePatient) {
-        return patientService.createPatient(thePatient);
+    public MethodOutcome createPatient(@ResourceParam Patient thePatient, RequestDetails theRequestDetails) {
+        return patientService.createPatient(thePatient, theRequestDetails);
     }
 
     //   OK

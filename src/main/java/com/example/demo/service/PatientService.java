@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import com.example.demo.repository.PatientRepository;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
@@ -20,20 +21,22 @@ public class PatientService {
      }
 
 //   "The server SHALL populate the id, meta.versionId and meta.lastUpdated with the new correct values."
-     public MethodOutcome createPatient(Patient thePatient) {
+     public MethodOutcome createPatient(Patient thePatient, RequestDetails theRequestDetails) {
         OperationOutcome operationOutcome = hasIdentifier(thePatient);
         if (operationOutcome!= null) {
-            return new MethodOutcome(thePatient.getIdElement(), operationOutcome, false);
+            MethodOutcome methodOutcome = new MethodOutcome();
+            methodOutcome.setResponseStatusCode(422);
+            methodOutcome.setCreated(false);
+            methodOutcome.setOperationOutcome(operationOutcome);
+            return methodOutcome;
         }
         Meta meta = new Meta();
-        meta.setId(UUID.randomUUID().toString());
+        String theId = UUID.randomUUID().toString();
+        thePatient.setId(theId);
         meta.setVersionId("1");
         meta.setLastUpdated(new Date());
         thePatient.setMeta(meta);
-        HashMap<String,String> locationHeader = new HashMap<>();
-        locationHeader.put("Location", "http://localhost:8081/Patient/"+ thePatient.getIdPart()+"/_history/" +
-                thePatient.getMeta().getVersionId());
-        return patientRepository.create(thePatient, locationHeader);
+        return patientRepository.createPatient(thePatient, theRequestDetails, theId, "1");
      }
 
      public Patient readPatient(IdType theId) {
