@@ -27,7 +27,9 @@ public class FHIRServer extends RestfulServer {
 
     @Override
     protected void initialize() {
-//      TODO(Interceptor logging más robusto y Nginx)
+//        TODO(Spring Security + JWT
+//         -
+        setFhirContext(getFhirContext());
         registerInterceptor(loggingInterceptor());
         registerInterceptor(requestValidatingInterceptor(fhirValidator));
         registerInterceptor(responseValidatingInterceptor(fhirValidator));
@@ -39,20 +41,21 @@ public class FHIRServer extends RestfulServer {
     }
 
     public RequestValidatingInterceptor requestValidatingInterceptor(FhirValidator fhirValidator) {
-        RequestValidatingInterceptor requestInterceptor = new RequestValidatingInterceptor();
-        requestInterceptor.setFailOnSeverity(ResultSeverityEnum.ERROR);
-        requestInterceptor.setAddResponseHeaderOnSeverity(ResultSeverityEnum.INFORMATION);
-        requestInterceptor.setResponseHeaderValue("Validation on ${line}: ${message} ${severity}");
-        requestInterceptor.setResponseHeaderValueNoIssues("No issues detected");
-        requestInterceptor.setValidator(fhirValidator);
-        return requestInterceptor;
+        RequestValidatingInterceptor requestValidatingInterceptor = new RequestValidatingInterceptor();
+        requestValidatingInterceptor.setFailOnSeverity(ResultSeverityEnum.ERROR);
+        requestValidatingInterceptor.setAddResponseHeaderOnSeverity(ResultSeverityEnum.INFORMATION);
+        requestValidatingInterceptor.setAddValidationResultsToResponseOperationOutcome(true);
+        requestValidatingInterceptor.setResponseHeaderValue("${severity}: ${message}");
+        requestValidatingInterceptor.setResponseHeaderValueNoIssues("No issues detected");
+        requestValidatingInterceptor.setValidator(fhirValidator);
+        return requestValidatingInterceptor;
     }
 
     public ResponseValidatingInterceptor responseValidatingInterceptor(FhirValidator fhirValidator) {
         ResponseValidatingInterceptor responseValidatingInterceptor = new ResponseValidatingInterceptor();
         responseValidatingInterceptor.setFailOnSeverity(ResultSeverityEnum.ERROR);
         responseValidatingInterceptor.setAddResponseHeaderOnSeverity(ResultSeverityEnum.INFORMATION);
-        responseValidatingInterceptor.setResponseHeaderValue("Validation on ${line}: ${message} ${severity}");
+        responseValidatingInterceptor.setResponseHeaderValue("${severity}: ${message}");
         responseValidatingInterceptor.setResponseHeaderValueNoIssues("No issues detected");
         responseValidatingInterceptor.setValidator(fhirValidator);
         return responseValidatingInterceptor;
@@ -61,10 +64,9 @@ public class FHIRServer extends RestfulServer {
     public LoggingInterceptor loggingInterceptor() {
         LoggingInterceptor loggingInterceptor = new LoggingInterceptor();
         loggingInterceptor.setLogExceptions(true);
-        loggingInterceptor.setMessageFormat("${requestVerb} - " + "RequestID: ${requestId}, " +
-                "OperationType: ${operationType}, "+
-                "Request parameters: ${requestParameters}, " + "ResourceID/name: ${idOrResourceName}, " +
-                "${processingTimeMillis} ms");
+        loggingInterceptor.setMessageFormat("${requestVerb} - " + "OperationType: ${operationType}, " +
+                "RequestID: ${requestId}, " + "ResourceID/name: ${idOrResourceName}, " +
+                "Request parameters: ${requestParameters}, " + "${processingTimeMillis} ms");
         loggingInterceptor.setErrorMessageFormat("${exceptionMessage}");
         loggingInterceptor.setLoggerName("the.logger");
         return loggingInterceptor;

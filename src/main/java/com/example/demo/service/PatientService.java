@@ -2,11 +2,14 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import com.example.demo.repository.PatientRepository;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.*;
+import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.UUID;
+//TODO(Security attributes inside resources json)
 @Service
 public class PatientService {
      private final PatientRepository patientRepository;
@@ -15,12 +18,18 @@ public class PatientService {
          this.patientRepository = patientRepository;
      }
 
+//   "The server SHALL populate the id, meta.versionId and meta.lastUpdated with the new correct values."
      public MethodOutcome createPatient(Patient thePatient) {
-            OperationOutcome operationOutcome = hasIdentifier(thePatient);
-            if (operationOutcome!= null) {
-             return new MethodOutcome(thePatient.getIdElement(), operationOutcome, false);
-            }
-            return patientRepository.createPatient(thePatient);
+        OperationOutcome operationOutcome = hasIdentifier(thePatient);
+        if (operationOutcome!= null) {
+            return new MethodOutcome(thePatient.getIdElement(), operationOutcome, false);
+        }
+        Meta meta = new Meta();
+        meta.setId(UUID.randomUUID().toString());
+        meta.setVersionId("1");
+        meta.setLastUpdated(new Date());
+        thePatient.setMeta(meta);
+        return patientRepository.createPatient(thePatient);
      }
 
      public Patient readPatient(IdType theId) {
