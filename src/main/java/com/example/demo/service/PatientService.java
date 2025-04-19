@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.UUID;
 //TODO(Security attributes inside resources json)
 @Service
@@ -29,7 +30,10 @@ public class PatientService {
         meta.setVersionId("1");
         meta.setLastUpdated(new Date());
         thePatient.setMeta(meta);
-        return patientRepository.createPatient(thePatient);
+        HashMap<String,String> locationHeader = new HashMap<>();
+        locationHeader.put("Location", "http://localhost:8081/Patient/"+ thePatient.getIdPart()+"/_history/" +
+                thePatient.getMeta().getVersionId());
+        return patientRepository.create(thePatient, locationHeader);
      }
 
      public Patient readPatient(IdType theId) {

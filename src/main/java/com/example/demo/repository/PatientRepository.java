@@ -5,6 +5,7 @@ import ca.uhn.fhir.model.api.IQueryParameterType;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import com.google.common.collect.Multimap;
+import jakarta.servlet.http.HttpServletResponse;
 import org.bson.Document;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
@@ -27,9 +28,10 @@ import java.util.UUID;
 //https://www.hl7.org/fhir/http.html#create
 //NO SE PUEDEN guardar objetos HAPI FHIR porque Mongo los parsea y se quedan inútiles
 @Repository
-public class PatientRepository {
-    MongoTemplate mongoTemplate;
-    JsonParser jsonParser;
+public class PatientRepository implements ca.uhn.fhir.repository.Repository {
+    private MongoTemplate mongoTemplate;
+    private JsonParser jsonParser;
+    private HttpServletResponse httpServletResponse;
 
 //TODO(Encriptar datos sensibles)
     public PatientRepository(MongoTemplate mongoTemplate, JsonParser jsonParser) {
@@ -94,44 +96,44 @@ public class PatientRepository {
         return mongoTemplate.findOne(new Query(criteria), String.class,"patient");
     }
 
-//    @Override
-//    public <T extends IBaseResource, I extends IIdType> T read(Class<T> aClass, I i, Map<String, String> map) {
-//        return null;
-//    }
-//
-//    @Override
-//    public MethodOutcome create(Patient thePatient, Map<String, String> map) {
-//        thePatient.setMeta
-//        return null;
-//    }
-//
-//    @Override
-//    public <T extends IBaseResource> MethodOutcome update(T t, Map<String, String> map) {
-//        return null;
-//    }
-//
-//    @Override
-//    public <T extends IBaseResource, I extends IIdType> MethodOutcome delete(Class<T> aClass, I i, Map<String, String> map) {
-//        return null;
-//    }
-//
-//    @Override
-//    public <B extends IBaseBundle, T extends IBaseResource> B search(Class<B> aClass, Class<T> aClass1, Multimap<String, List<IQueryParameterType>> multimap, Map<String, String> map) {
-//        return null;
-//    }
-//
-//    @Override
-//    public <R extends IBaseResource, P extends IBaseParameters, T extends IBaseResource> R invoke(Class<T> aClass, String s, P p, Class<R> aClass1, Map<String, String> map) {
-//        return null;
-//    }
-//
-//    @Override
-//    public <R extends IBaseResource, P extends IBaseParameters, I extends IIdType> R invoke(I i, String s, P p, Class<R> aClass, Map<String, String> map) {
-//        return null;
-//    }
-//
-//    @Override
-//    public FhirContext fhirContext() {
-//        return null;
-//    }
+    @Override
+    public <T extends IBaseResource, I extends IIdType> T read(Class<T> aClass, I i, Map<String, String> map) {
+        return null;
+    }
+
+    @Override
+    public MethodOutcome create(Patient thePatient, Map<String, String> map) {
+
+        return null;
+    }
+
+    @Override
+    public <T extends IBaseResource> MethodOutcome update(T t, Map<String, String> map) {
+        return null;
+    }
+
+    @Override
+    public <T extends IBaseResource, I extends IIdType> MethodOutcome delete(Class<T> aClass, I i, Map<String, String> map) {
+        return null;
+    }
+
+    @Override
+    public <B extends IBaseBundle, T extends IBaseResource> B search(Class<B> aClass, Class<T> aClass1, Multimap<String, List<IQueryParameterType>> multimap, Map<String, String> map) {
+        return null;
+    }
+
+    @Override
+    public <R extends IBaseResource, P extends IBaseParameters, T extends IBaseResource> R invoke(Class<T> aClass, String s, P p, Class<R> aClass1, Map<String, String> map) {
+        return null;
+    }
+
+    @Override
+    public <R extends IBaseResource, P extends IBaseParameters, I extends IIdType> R invoke(I i, String s, P p, Class<R> aClass, Map<String, String> map) {
+        return null;
+    }
+
+    @Override
+    public FhirContext fhirContext() {
+        return null;
+    }
 }
