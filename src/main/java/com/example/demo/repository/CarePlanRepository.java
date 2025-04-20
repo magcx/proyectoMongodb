@@ -7,12 +7,15 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.Date;
 import java.util.UUID;
 
 //NO SE PUEDEN guardar objetos HAPI FHIR porque Mongo los parsea y se quedan inútiles
@@ -39,7 +42,12 @@ public class CarePlanRepository {
         }
         mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(theCarePlan)),
                 "carePlan");
-        return new MethodOutcome().setCreated(true).setResource(theCarePlan).setId(theCarePlan.getIdElement());
+        MethodOutcome methodOutcome = new MethodOutcome();
+        methodOutcome.setCreated(true);
+        methodOutcome.setResource(theCarePlan);
+        methodOutcome.setId(new IdType(theRequestDetails.getFhirServerBase(), " CarePlan",
+                theId, "1"));
+        return methodOutcome;
     }
 
     public CarePlan readCarePlan(IdType theId) {
@@ -53,16 +61,22 @@ public class CarePlanRepository {
     }
 
     public CarePlan updateCarePlan(IdType theId, CarePlan theCarePlan){
+        CarePlan carePlanFound = readCarePlan(theId);
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         Document carePlanDoc = Document.parse(jsonParser.encodeResourceToString(theCarePlan));
         FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
         Document updatedCarePlanDoc = mongoTemplate.findAndReplace(new Query(criteria), carePlanDoc, options,
                 "carePlan");
         if (updatedCarePlanDoc == null) {
-            System.out.println("No se puede actualizar el plan de cuidados");
-            return null;
+            throw new ResourceNotFoundException(theId);
         }
-        return jsonParser.parseResource(CarePlan.class, updatedCarePlanDoc.toJson());
+        CarePlan updatedCarePlan = jsonParser.parseResource(CarePlan.class, updatedCarePlanDoc.toJson());
+        String versionId = String.valueOf((Integer.parseInt(carePlanFound.getMeta().getVersionId())) + 1);
+        Meta meta = new Meta();
+        meta.setVersionId(versionId);
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
+        updatedCarePlan.setMeta(meta);
+        return updatedCarePlan;
     }
 
     public MethodOutcome deleteCarePlan (IdType theId){

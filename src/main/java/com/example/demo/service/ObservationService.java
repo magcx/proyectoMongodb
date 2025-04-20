@@ -1,11 +1,13 @@
 package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import com.example.demo.repository.ObservationRepository;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class ObservationService {
@@ -15,8 +17,22 @@ public class ObservationService {
         this.observationRepository = observationRepository;
     }
 
-    public MethodOutcome createObservation(Observation theObservation) {
-        return observationRepository.createObservation(theObservation);
+    public MethodOutcome createObservation(Observation theObservation, RequestDetails theRequestDetails) {
+        OperationOutcome operationOutcome = hasIdentifier(theObservation);
+        if (operationOutcome!= null) {
+            MethodOutcome methodOutcome = new MethodOutcome();
+            methodOutcome.setResponseStatusCode(422);
+            methodOutcome.setCreated(false);
+            methodOutcome.setOperationOutcome(operationOutcome);
+            return methodOutcome;
+        }
+        Meta meta = new Meta();
+        String theId = UUID.randomUUID().toString();
+        theObservation.setId(theId);
+        meta.setVersionId("1");
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
+        theObservation.setMeta(meta);
+        return observationRepository.createObservation(theObservation, theRequestDetails, theId);
     }
 
     public Observation readObservation(IdType theId) {
@@ -39,4 +55,15 @@ public class ObservationService {
         return observationRepository.deleteObservation(theId);
     }
 
+    public OperationOutcome hasIdentifier(Observation theObservation) {
+        OperationOutcome operationOutcome = new OperationOutcome();
+        if (theObservation.getIdentifier().isEmpty()) {
+            operationOutcome.addIssue()
+                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
+                    .setCode(OperationOutcome.IssueType.REQUIRED)
+                    .setDiagnostics("Identificador requerido");
+            return operationOutcome;
+        }
+        return null;
+    }
 }

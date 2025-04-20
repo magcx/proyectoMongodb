@@ -1,11 +1,16 @@
 package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import com.example.demo.repository.PractitionerRoleRepository;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.PractitionerRole;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class PractitionerRoleService {
@@ -15,12 +20,22 @@ public class PractitionerRoleService {
         this.practitionerRoleRepository = practitionerRoleRepository;
     }
 
-    public MethodOutcome createPractitionerRole(PractitionerRole thePractitionerRole) {
+    public MethodOutcome createPractitionerRole(PractitionerRole thePractitionerRole, RequestDetails theRequestDetails) {
         OperationOutcome operationOutcome = hasIdentifier(thePractitionerRole);
         if (operationOutcome!= null) {
-            return new MethodOutcome(thePractitionerRole.getIdElement(), operationOutcome, false);
+            MethodOutcome methodOutcome = new MethodOutcome();
+            methodOutcome.setResponseStatusCode(422);
+            methodOutcome.setCreated(false);
+            methodOutcome.setOperationOutcome(operationOutcome);
+            return methodOutcome;
         }
-        return practitionerRoleRepository.createPractitionerRole(thePractitionerRole);
+        Meta meta = new Meta();
+        String theId = UUID.randomUUID().toString();
+        thePractitionerRole.setId(theId);
+        meta.setVersionId("1");
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
+        thePractitionerRole.setMeta(meta);
+        return practitionerRoleRepository.createPractitionerRole(thePractitionerRole,theRequestDetails, theId);
     }
 
     public PractitionerRole readPractitionerRole(IdType theId) {

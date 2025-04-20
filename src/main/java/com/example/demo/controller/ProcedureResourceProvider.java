@@ -3,13 +3,13 @@ package com.example.demo.controller;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.repository.ProcedureRepository;
 import com.example.demo.service.ProcedureService;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Procedure;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -35,8 +35,9 @@ public class ProcedureResourceProvider implements IResourceProvider {
     //CRUD
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
-    public MethodOutcome createProcedure(@ResourceParam Procedure theProcedure) {
-        return procedureService.createProcedure(theProcedure);
+    public MethodOutcome createProcedure(@ResourceParam Procedure theProcedure, RequestDetails theRequestDetails) {
+
+        return procedureService.createProcedure(theProcedure, theRequestDetails);
     }
 
     //   OK

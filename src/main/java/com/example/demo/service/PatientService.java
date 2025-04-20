@@ -36,7 +36,7 @@ public class PatientService {
         meta.setVersionId("1");
         meta.setLastUpdated(new Date(System.currentTimeMillis()));
         thePatient.setMeta(meta);
-        return patientRepository.createPatient(thePatient, theRequestDetails, theId, "1");
+        return patientRepository.createPatient(thePatient, theRequestDetails, theId);
      }
 
      public Patient readPatient(IdType theId) {

@@ -3,13 +3,13 @@ package com.example.demo.controller;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.repository.PractitionerRoleRepository;
 import com.example.demo.service.PractitionerRoleService;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.PractitionerRole;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -35,8 +35,8 @@ public class PractitionerRoleResourceProvider implements IResourceProvider {
     //CRUD
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
-    public MethodOutcome createPractitionerRole(@ResourceParam PractitionerRole thePractitionerRole) {
-      return practitionerRoleService.createPractitionerRole(thePractitionerRole);
+    public MethodOutcome createPractitionerRole(@ResourceParam PractitionerRole thePractitionerRole, RequestDetails theRequestDetails) {
+      return practitionerRoleService.createPractitionerRole(thePractitionerRole, theRequestDetails);
     }
     //   OK
     @Read()

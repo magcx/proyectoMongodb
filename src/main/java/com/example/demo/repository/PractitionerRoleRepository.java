@@ -2,9 +2,11 @@ package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.PractitionerRole;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
@@ -13,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.UUID;
 
 @Repository
@@ -27,17 +30,24 @@ public class PractitionerRoleRepository {
             this.jsonParser = jsonParser;
         }
 
-        public MethodOutcome createPractitionerRole(PractitionerRole thePractitionerRole){
+        public MethodOutcome createPractitionerRole(PractitionerRole thePractitionerRole, RequestDetails theRequestDetails, String theId){
             thePractitionerRole.setId(UUID.randomUUID().toString());  //Se lo toma como que no tiene id
             if (practitionerRoleFound(thePractitionerRole) != null) {
                 OperationOutcome operationOutcome = new OperationOutcome();
-                operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE);
-                return new MethodOutcome(thePractitionerRole.getIdElement(), operationOutcome, false);
+                operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
+                        .setDiagnostics("Duplicate Practitioner Role");
+                MethodOutcome methodOutcome = new MethodOutcome(thePractitionerRole.getIdElement(), operationOutcome, false);
+                methodOutcome.setResponseStatusCode(422);
+                return methodOutcome;
             }
             mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(thePractitionerRole)),
                     "practitionerRole");
-            return new MethodOutcome().setCreated(true).setResource(thePractitionerRole)
-                    .setId(thePractitionerRole.getIdElement());
+            MethodOutcome methodOutcome = new MethodOutcome();
+            methodOutcome.setCreated(true);
+            methodOutcome.setResource(thePractitionerRole);
+            methodOutcome.setId(new IdType(theRequestDetails.getFhirServerBase(), "PractitionerRole",
+                    theId, "1"));
+            return methodOutcome;
         }
 
         public PractitionerRole readPractitionerRole(IdType theId) {
@@ -52,16 +62,22 @@ public class PractitionerRoleRepository {
         }
 
         public PractitionerRole updatePractitionerRole(IdType theId, PractitionerRole thePractitionerRole){
+            PractitionerRole practitionerRoleFound = readPractitionerRole(theId);
             Criteria criteria = Criteria.where("id").is(theId.getIdPart());
             Document practitionerRoleDoc = Document.parse(jsonParser.encodeResourceToString(thePractitionerRole));
             FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
             Document updatedDoc = mongoTemplate.findAndReplace(new Query(criteria), practitionerRoleDoc, options,
                     "practitionerRole");
             if (updatedDoc == null) {
-                System.out.println("No se puede actualizar el practitioner Role");
-                return null;
+                throw new ResourceNotFoundException(theId);
             }
-            return jsonParser.parseResource(PractitionerRole.class, updatedDoc.toJson());
+            PractitionerRole updatedPractitionedRoled =  jsonParser.parseResource(PractitionerRole.class, updatedDoc.toJson());
+            String versionId = String.valueOf((Integer.parseInt(practitionerRoleFound.getMeta().getVersionId())) + 1);
+            Meta meta = new Meta();
+            meta.setVersionId(versionId);
+            meta.setLastUpdated(new Date(System.currentTimeMillis()));
+            updatedPractitionedRoled.setMeta(meta);
+            return updatedPractitionedRoled;
         }
 
         public MethodOutcome deletePractitionerRole(IdType theId){

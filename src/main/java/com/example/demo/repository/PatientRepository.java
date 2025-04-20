@@ -66,16 +66,16 @@ public class PatientRepository {
     }
     //    OK-ish - optimizar
     public Patient updatePatient(IdType theId, Patient thePatient){
-        Patient patiendFound = readPatient(theId);
+        Patient patientFound = readPatient(theId);
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         Document patientDoc = Document.parse(jsonParser.encodeResourceToString(thePatient));
         FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
         Document updatedDoc = mongoTemplate.findAndReplace(new Query(criteria), patientDoc, options,"patient");
         if (updatedDoc == null) {
-            return null;
+            throw new ResourceNotFoundException(theId);
         }
         Patient updatedPatient = jsonParser.parseResource(Patient.class, updatedDoc.toJson());
-        String versionId = String.valueOf((Integer.parseInt(patiendFound.getMeta().getVersionId())) + 1);
+        String versionId = String.valueOf((Integer.parseInt(patientFound.getMeta().getVersionId())) + 1);
         Meta meta = new Meta();
         meta.setVersionId(versionId);
         meta.setLastUpdated(new Date(System.currentTimeMillis()));

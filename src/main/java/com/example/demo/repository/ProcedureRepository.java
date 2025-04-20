@@ -2,10 +2,12 @@ package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.Procedure;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
@@ -14,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.UUID;
 
 @Repository
@@ -28,17 +31,24 @@ public class ProcedureRepository {
         this.jsonParser = jsonParser;
     }
 
-    public MethodOutcome createProcedure(Procedure theProcedure){
+    public MethodOutcome createProcedure(Procedure theProcedure, RequestDetails theRequestDetails, String theId){
         theProcedure.setId(UUID.randomUUID().toString());  //Se lo toma como que no tiene id
         if (procedureFound(theProcedure) != null) {
             OperationOutcome operationOutcome = new OperationOutcome();
-            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE);
-            return new MethodOutcome(theProcedure.getIdElement(), operationOutcome, false);
+            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
+                    .setDiagnostics("Duplicate procedure");
+            MethodOutcome methodOutcome = new MethodOutcome(theProcedure.getIdElement(), operationOutcome, false);
+            methodOutcome.setResponseStatusCode(422);
+            return methodOutcome;
         }
         mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(theProcedure)),
                 "procedure");
-        return new MethodOutcome().setCreated(true).setResource(theProcedure).setId(theProcedure.getIdElement());
-    }
+        MethodOutcome methodOutcome = new MethodOutcome();
+        methodOutcome.setCreated(true);
+        methodOutcome.setResource(theProcedure);
+        methodOutcome.setId(new IdType(theRequestDetails.getFhirServerBase(), "Patient",
+                theId, "1"));
+        return methodOutcome;    }
 
     public Procedure readProcedure(IdType theId) {
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
@@ -50,15 +60,21 @@ public class ProcedureRepository {
     }
 
     public Procedure updateProcedure(IdType theId, Procedure theProcedure){
+        Procedure procedureFound = readProcedure(theId);
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         Document procedureDoc = Document.parse(jsonParser.encodeResourceToString(theProcedure));
         FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
         Document updatedDoc = mongoTemplate.findAndReplace(new Query(criteria), procedureDoc, options,
                 "procedure");
         if (updatedDoc == null) {
-            throw new UnprocessableEntityException("Procedure not found");
-        }
-        return jsonParser.parseResource(Procedure.class, updatedDoc.toJson());
+            throw new ResourceNotFoundException(theId);        }
+        Procedure updatedProcedure = jsonParser.parseResource(Procedure.class, updatedDoc.toJson());
+        String versionId = String.valueOf((Integer.parseInt(procedureFound.getMeta().getVersionId())) + 1);
+        Meta meta = new Meta();
+        meta.setVersionId(versionId);
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
+        updatedProcedure.setMeta(meta);
+        return  updatedProcedure;
     }
 
     public MethodOutcome deleteProcedure(IdType theId){
