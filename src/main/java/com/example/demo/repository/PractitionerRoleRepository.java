@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -44,10 +45,10 @@ public class PractitionerRoleRepository {
             Criteria criteria = Criteria.where("id").is(theId.getIdPart());
             String jsonPractitionerRole = mongoTemplate.findOne(new Query(criteria), String.class,
                     "practitionerRole");
-            if (jsonPractitionerRole != null) {
-                return jsonParser.parseResource(PractitionerRole.class, jsonPractitionerRole);
+            if (jsonPractitionerRole == null) {
+                throw new ResourceNotFoundException(theId);
             }
-            return null;
+            return jsonParser.parseResource(PractitionerRole.class, jsonPractitionerRole);
         }
 
         public PractitionerRole updatePractitionerRole(IdType theId, PractitionerRole thePractitionerRole){

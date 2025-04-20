@@ -34,7 +34,7 @@ public class PatientService {
         String theId = UUID.randomUUID().toString();
         thePatient.setId(theId);
         meta.setVersionId("1");
-        meta.setLastUpdated(new Date());
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
         thePatient.setMeta(meta);
         return patientRepository.createPatient(thePatient, theRequestDetails, theId, "1");
      }

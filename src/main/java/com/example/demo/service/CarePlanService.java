@@ -1,11 +1,16 @@
 package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
 import com.example.demo.repository.CarePlanRepository;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.OperationOutcome;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class CarePlanService {
@@ -15,12 +20,22 @@ public class CarePlanService {
         this.carePlanRepository = carePlanRepository;
     }
 
-    public MethodOutcome createCarePlan(CarePlan theCarePlan) {
+    public MethodOutcome createCarePlan(CarePlan theCarePlan, RequestDetails theRequestDetails) {
         OperationOutcome operationOutcome = hasIdentifier(theCarePlan);
         if (operationOutcome!= null) {
-            return new MethodOutcome(theCarePlan.getIdElement(), operationOutcome, false);
+            MethodOutcome methodOutcome = new MethodOutcome();
+            methodOutcome.setResponseStatusCode(422);
+            methodOutcome.setCreated(false);
+            methodOutcome.setOperationOutcome(operationOutcome);
+            return methodOutcome;
         }
-        return carePlanRepository.createCarePlan(theCarePlan);
+        Meta meta = new Meta();
+        String theId = UUID.randomUUID().toString();
+        theCarePlan.setId(theId);
+        meta.setVersionId("1");
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
+        theCarePlan.setMeta(meta);
+        return carePlanRepository.createCarePlan(theCarePlan, theRequestDetails, theId);
     }
 
     public CarePlan readCarePlan(IdType theId) {

@@ -9,7 +9,6 @@ import com.example.demo.repository.PatientRepository;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Patient;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.stereotype.Controller;
 import com.example.demo.service.*;
 import org.springframework.web.bind.annotation.RestController;
 

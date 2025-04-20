@@ -2,6 +2,8 @@ package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.IdType;
@@ -25,12 +27,15 @@ public class CarePlanRepository {
         this.jsonParser = jsonParser;
     }
 
-    public MethodOutcome createCarePlan(CarePlan theCarePlan){
+    public MethodOutcome createCarePlan(CarePlan theCarePlan, RequestDetails theRequestDetails, String theId){
         theCarePlan.setId(UUID.randomUUID().toString());  //Se lo toma como que no tiene id
         if (carePlanFound(theCarePlan) != null) {
             OperationOutcome operationOutcome = new OperationOutcome();
-            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE);
-            return new MethodOutcome(theCarePlan.getIdElement(), operationOutcome, false);
+            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
+                    .setDiagnostics("Duplicate care plan");
+            MethodOutcome methodOutcome = new MethodOutcome(theCarePlan.getIdElement(), operationOutcome, false);
+            methodOutcome.setResponseStatusCode(422);
+            return methodOutcome;
         }
         mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(theCarePlan)),
                 "carePlan");
@@ -41,10 +46,10 @@ public class CarePlanRepository {
         System.out.println(theId.getIdPart());
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         String jsonCarePlan = mongoTemplate.findOne(new Query(criteria), String.class,"carePlan");
-        if (jsonCarePlan != null) {
-            return jsonParser.parseResource(CarePlan.class, jsonCarePlan);
+        if (jsonCarePlan == null) {
+            throw new ResourceNotFoundException(theId);
         }
-        return null;
+        return jsonParser.parseResource(CarePlan.class, jsonCarePlan);
     }
 
     public CarePlan updateCarePlan(IdType theId, CarePlan theCarePlan){

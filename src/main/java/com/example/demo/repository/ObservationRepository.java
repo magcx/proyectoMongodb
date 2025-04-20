@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Observation;
@@ -42,10 +43,10 @@ public class ObservationRepository {
         System.out.println(theId.getIdPart());
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         String jsonObservation = mongoTemplate.findOne(new Query(criteria), String.class,"observation");
-        if (jsonObservation != null) {
-            return jsonParser.parseResource(Observation.class, jsonObservation);
+        if (jsonObservation == null) {
+            throw new ResourceNotFoundException(theId);
         }
-        return null;
+        return jsonParser.parseResource(Observation.class, jsonObservation);
     }
 
     public Observation updateObservation(IdType theId, Observation theObservation){

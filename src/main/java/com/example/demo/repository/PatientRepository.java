@@ -5,6 +5,7 @@ import ca.uhn.fhir.model.api.IQueryParameterType;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.google.common.collect.Multimap;
 import jakarta.servlet.http.HttpServletResponse;
 import org.bson.Document;
@@ -35,7 +36,7 @@ public class PatientRepository {
         this.jsonParser = jsonParser;
     }
 //    OK-ish - optimizar
-    public MethodOutcome createPatient(Patient thePatient, RequestDetails theRequestDetails, String theId, String theVersionId) {
+    public MethodOutcome createPatient(Patient thePatient, RequestDetails theRequestDetails, String theId) {
         if (patientFound(thePatient) != null) {
             OperationOutcome operationOutcome = new OperationOutcome();
             operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
@@ -50,7 +51,7 @@ public class PatientRepository {
         methodOutcome.setCreated(true);
         methodOutcome.setResource(thePatient);
         methodOutcome.setId(new IdType(theRequestDetails.getFhirServerBase(), "Patient",
-                theId, theVersionId));
+                theId, "1"));
         return methodOutcome;
     }
 
@@ -58,10 +59,10 @@ public class PatientRepository {
         System.out.println(theId.getIdPart());
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         String jsonPatient = mongoTemplate.findOne(new Query(criteria), String.class,"patient");
-        if (jsonPatient != null) {
-            return jsonParser.parseResource(Patient.class, jsonPatient);
+        if (jsonPatient == null) {
+            throw new ResourceNotFoundException(theId);
         }
-        return null;
+        return jsonParser.parseResource(Patient.class, jsonPatient);
     }
     //    OK-ish - optimizar
     public Patient updatePatient(IdType theId, Patient thePatient){
@@ -77,7 +78,7 @@ public class PatientRepository {
         String versionId = String.valueOf((Integer.parseInt(patiendFound.getMeta().getVersionId())) + 1);
         Meta meta = new Meta();
         meta.setVersionId(versionId);
-        meta.setLastUpdated(new Date());
+        meta.setLastUpdated(new Date(System.currentTimeMillis()));
         updatedPatient.setMeta(meta);
         return updatedPatient;
     }

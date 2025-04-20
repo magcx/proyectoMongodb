@@ -2,6 +2,8 @@ package com.example.demo.repository;
 
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -19,7 +21,8 @@ public class ProcedureRepository {
     MongoTemplate mongoTemplate;
     JsonParser jsonParser;
 
-    //TODO(Encriptar datos sensibles)
+    //TODO( - manage errors
+    // - Encriptar datos sensibles)
     public ProcedureRepository(MongoTemplate mongoTemplate, JsonParser jsonParser) {
         this.mongoTemplate = mongoTemplate;
         this.jsonParser = jsonParser;
@@ -38,13 +41,12 @@ public class ProcedureRepository {
     }
 
     public Procedure readProcedure(IdType theId) {
-        System.out.println(theId.getIdPart());
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         String jsonProcedure = mongoTemplate.findOne(new Query(criteria), String.class,"procedure");
-        if (jsonProcedure != null) {
-            return jsonParser.parseResource(Procedure.class, jsonProcedure);
+        if (jsonProcedure == null) {
+            throw new ResourceNotFoundException(theId);
         }
-        return null;
+        return jsonParser.parseResource(Procedure.class, jsonProcedure);
     }
 
     public Procedure updateProcedure(IdType theId, Procedure theProcedure){
@@ -54,8 +56,7 @@ public class ProcedureRepository {
         Document updatedDoc = mongoTemplate.findAndReplace(new Query(criteria), procedureDoc, options,
                 "procedure");
         if (updatedDoc == null) {
-            System.out.println("No se puede actualizar el procedure");
-            return null;
+            throw new UnprocessableEntityException("Procedure not found");
         }
         return jsonParser.parseResource(Procedure.class, updatedDoc.toJson());
     }
