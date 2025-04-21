@@ -16,6 +16,9 @@ public class OrganizationUserService {
     private OrganizationUserRepository orgUserRepo;
     @Autowired
     AuthenticationManager authManager;
+    @Autowired
+    JWTService jwtService;
+
     private BCryptPasswordEncoder bcryptEncoder = new BCryptPasswordEncoder(12);
 
     public OrganizationUser register (OrganizationUser orgUser){
@@ -31,7 +34,7 @@ public class OrganizationUserService {
         Authentication authentication = authManager
                 .authenticate(new UsernamePasswordAuthenticationToken(orgUser.getUsername(), orgUser.getPassword()));
         if (authentication.isAuthenticated()){
-
+           jwtService.generateToken(orgUser.getUsername());
         }
          return
     }
