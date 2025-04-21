@@ -28,7 +28,7 @@ public class FHIRServer extends RestfulServer {
     @Override
     protected void initialize() {
 //        TODO(Spring Security + JWT
-//         -
+//         - Mongo validation rules (en la DB)
         setFhirContext(getFhirContext());
         registerInterceptor(loggingInterceptor());
         registerInterceptor(requestValidatingInterceptor(fhirValidator));

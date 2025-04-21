@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-
 import com.example.demo.model.OrganizationUser;
 import com.example.demo.service.OrganizationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +18,7 @@ public class OrganizationUserController {
     }
 
     @PostMapping("/login")
-    public login (@RequestBody OrganizationUser orgUser){
+    public String login (@RequestBody OrganizationUser orgUser){
         return orgUserService.verify(orgUser);
     }
-
 }
