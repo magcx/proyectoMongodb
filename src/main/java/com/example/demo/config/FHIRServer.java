@@ -27,7 +27,7 @@ public class FHIRServer extends RestfulServer {
 
     @Override
     protected void initialize() {
-//        TODO(Spring Security + JWT
+//        TODO(Spring Security + JWT (?funciona de verdad? con basic auth funciona desde el cliente que adquiere token)
 //         - Mongo validation rules (en la DB)
         setFhirContext(getFhirContext());
         registerInterceptor(loggingInterceptor());
