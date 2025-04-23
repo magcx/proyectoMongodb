@@ -18,7 +18,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         OrganizationUser orgUser = orgUserRep.findByUsername(username);
         if (orgUser == null) {
-            System.out.println("User Not Found");
             throw new UsernameNotFoundException("User not found");
         }
         return new UserPrincipal(orgUser);

@@ -27,8 +27,9 @@ public class FHIRServer extends RestfulServer {
 
     @Override
     protected void initialize() {
-//        TODO(Spring Security + JWT (?funciona de verdad? con basic auth funciona desde el cliente que adquiere token)
+//        TODO(-Encriptar identificador(SS), nombres desde servidor con MongoDB Lib mongocrypt)
 //         - Mongo validation rules (en la DB)
+//        - NFC logging con Java en cliente
         setFhirContext(getFhirContext());
         registerInterceptor(loggingInterceptor());
         registerInterceptor(requestValidatingInterceptor(fhirValidator));
