@@ -65,8 +65,18 @@ services:
       POSTGRES_DB: vault
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vault
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U vault_user -d vault" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   vault:
+    depends_on:
+      postgres:
+        condition: service_healthy
     image: hashicorp/vault:latest
     container_name: vault-address-service
     restart: always
@@ -80,9 +90,12 @@ services:
     cap_add:
       - IPC_LOCK
     command: "vault server -config=/vault.hcl"
+    networks:
+      - vault
 
 networks:
   elastic:
+  vault:
 
 volumes:
   elastic:
