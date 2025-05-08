@@ -3,14 +3,18 @@ package com.example.demo.controller;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.*;
 import com.example.demo.repository.PatientRepository;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Patient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import com.example.demo.service.*;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 public class PatientResourceProvider implements IResourceProvider {
@@ -56,8 +60,8 @@ public class PatientResourceProvider implements IResourceProvider {
         return patientService.deletePatient(theId);
     }
 
-//    @Search
-//    public OperationOutcome searchPatient(){
-//        return null;
-//    }
+    @Search
+    public List<Patient> searchPatient(){
+        return patientService.getPatients();
+    }
 }

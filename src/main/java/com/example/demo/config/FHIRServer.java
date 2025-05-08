@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import ca.uhn.fhir.parser.JsonParser;
+import ca.uhn.fhir.rest.server.FifoMemoryPagingProvider;
 import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.LoggingInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.RequestValidatingInterceptor;
@@ -29,7 +30,6 @@ public class FHIRServer extends RestfulServer {
     protected void initialize() {
 //        TODO(-Encriptar identificador(SS), nombres desde servidor con MongoDB Lib mongocrypt)
 //         - Mongo validation rules (en la DB)
-//        - NFC logging con Java en cliente
         setFhirContext(getFhirContext());
         registerInterceptor(loggingInterceptor());
         registerInterceptor(requestValidatingInterceptor(fhirValidator));
@@ -39,6 +39,10 @@ public class FHIRServer extends RestfulServer {
                 new CarePlanResourceProvider(jsonParser, mongoTemplate),
                 new ObservationResourceProvider(jsonParser, mongoTemplate),
                 new PatientResourceProvider(jsonParser, mongoTemplate));
+        FifoMemoryPagingProvider pagingProvider = new FifoMemoryPagingProvider(10);
+        pagingProvider.setDefaultPageSize(10);
+        pagingProvider.setMaximumPageSize(50);
+        setPagingProvider(pagingProvider);
     }
 
     public RequestValidatingInterceptor requestValidatingInterceptor(FhirValidator fhirValidator) {

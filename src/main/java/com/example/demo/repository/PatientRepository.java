@@ -22,6 +22,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 //https://www.hl7.org/fhir/http.html#create
 //NO SE PUEDEN guardar objetos HAPI FHIR porque Mongo los parsea y se quedan inútiles
@@ -93,6 +94,16 @@ public class PatientRepository {
             return new MethodOutcome(operationOutcome);
         }
         return new MethodOutcome().setId(theId);
+    }
+
+    public List<Patient> getPatients() {
+        List<String> patientsJson = mongoTemplate.findAll(String.class,"patient");
+        if (patientsJson.isEmpty()) {
+            throw new ResourceNotFoundException("No patients found");
+        }
+        return patientsJson.stream()
+                .map(String -> jsonParser.parseResource(Patient.class, String))
+                .collect(Collectors.toList());
     }
 
     public String patientFound(Patient thePatient){

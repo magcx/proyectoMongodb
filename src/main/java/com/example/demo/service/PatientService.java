@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 //TODO(Security attributes inside resources json)
 @Service
@@ -59,6 +60,10 @@ public class PatientService {
          return patientRepository.deletePatient(theId);
      }
 //    TODO(El return)
+
+     public List<Patient> getPatients() {
+         return patientRepository.getPatients();
+     }
 
      public OperationOutcome hasIdentifier(Patient thePatient) {
          OperationOutcome operationOutcome = new OperationOutcome();
