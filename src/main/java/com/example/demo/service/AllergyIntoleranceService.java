@@ -2,11 +2,10 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.StringParam;
 import com.example.demo.repository.AllergyIntoleranceRepository;
-import org.hl7.fhir.r4.model.AllergyIntolerance;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -17,7 +16,7 @@ import java.util.UUID;
 public class AllergyIntoleranceService {
     private final AllergyIntoleranceRepository allergyIntoleranceRepository;
 
-    public AllergyIntoleranceService(AllergyIntoleranceRepository AllergyIntoleranceRepository) {
+    public AllergyIntoleranceService(AllergyIntoleranceRepository allergyIntoleranceRepository) {
         this.allergyIntoleranceRepository = allergyIntoleranceRepository;
     }
 
@@ -61,8 +60,8 @@ public class AllergyIntoleranceService {
     }
 //    TODO(El return)
 
-    public List<AllergyIntolerance> getAllergiesIntolerances() {
-        return allergyIntoleranceRepository.getAllergiesIntolerances();
+    public List<AllergyIntolerance> getAllergiesIntolerances(ReferenceParam patientRef) {
+        return allergyIntoleranceRepository.getAllergiesIntolerances(patientRef);
     }
 
     public OperationOutcome hasIdentifier(AllergyIntolerance theAllergyIntolerance) {

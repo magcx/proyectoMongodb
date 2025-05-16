@@ -28,7 +28,7 @@ public class ResourceProviderConfig {
                 new DefaultProfileValidationSupport(ctx), //Validación de StructureDefinition
                 new SnapshotGeneratingValidationSupport(ctx), //Validación y generación de perfiles
                 new CommonCodeSystemsTerminologyService(ctx), //Validación de CodeSystem
-                new RemoteTerminologyServiceValidationSupport(ctx, "http://localhost:8080/fhir"),
+                new RemoteTerminologyServiceValidationSupport(ctx, "http://localhost:8080/fhir/"),
                 new InMemoryTerminologyServerValidationSupport(ctx), //Validación de CodeSystem y ValueSet desde la memoria
                 new UnknownCodeSystemWarningValidationSupport(ctx)
         );

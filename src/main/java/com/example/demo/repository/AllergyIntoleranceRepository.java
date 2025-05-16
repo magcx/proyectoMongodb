@@ -3,6 +3,8 @@ package com.example.demo.repository;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.*;
@@ -85,8 +87,11 @@ public class AllergyIntoleranceRepository {
         return new MethodOutcome().setId(theId);
     }
 
-    public List<AllergyIntolerance> getAllergiesIntolerances() {
-        List<String> allergiesIntolerancesJson = mongoTemplate.findAll(String.class,"allergyIntolerance");
+    public List<AllergyIntolerance> getAllergiesIntolerances(ReferenceParam patientRef) {
+        Criteria criteria = Criteria
+                .where("patient.reference")
+                .is("Patient" + "/" + patientRef.getIdPart());
+        List<String> allergiesIntolerancesJson = mongoTemplate.find(new Query(criteria), String.class,"allergyIntolerance");
         if (allergiesIntolerancesJson.isEmpty()) {
             throw new ResourceNotFoundException("No resources found");
         }
@@ -98,8 +103,8 @@ public class AllergyIntoleranceRepository {
     public String allergyIntoleranceFound(AllergyIntolerance theAllergyIntolerance){
         String identifierSystem = theAllergyIntolerance.getIdentifierFirstRep().getSystem();
         String identifierValue = theAllergyIntolerance.getIdentifierFirstRep().getValue();
-        Criteria criteria = Criteria.where("identifier").elemMatch(
-                Criteria.where("system").is(identifierSystem)
+        Criteria criteria = Criteria.where("identifier")
+                .elemMatch(Criteria.where("system").is(identifierSystem)
                         .and("value").is(identifierValue));
         return mongoTemplate.findOne(new Query(criteria), String.class,"allergyIntolerance");
     }

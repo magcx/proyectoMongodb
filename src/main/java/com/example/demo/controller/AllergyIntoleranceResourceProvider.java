@@ -4,11 +4,12 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.repository.AllergyIntoleranceRepository;
 import com.example.demo.service.AllergyIntoleranceService;
-import org.hl7.fhir.r4.model.AllergyIntolerance;
-import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -59,7 +60,7 @@ public class AllergyIntoleranceResourceProvider implements IResourceProvider {
     }
 
     @Search
-    public List<AllergyIntolerance> searchAllergiesIntolerances(){
-        return allergyIntoleranceService.getAllergiesIntolerances();
+    public List<AllergyIntolerance> searchAllergiesIntolerances(@RequiredParam(name = AllergyIntolerance.SP_PATIENT) ReferenceParam patientRef) {
+        return allergyIntoleranceService.getAllergiesIntolerances(patientRef);
     }
 }

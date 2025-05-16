@@ -60,7 +60,7 @@ public class MedicationRepository {
     }
     //    OK-ish - optimizar
     public Medication updateMedication(IdType theId, Medication theMedication){
-        Medication medicationfound = readMedication(theId);
+        Medication medicationFound = readMedication(theId);
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         Document medicationDoc = Document.parse(jsonParser.encodeResourceToString(theMedication));
         FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
