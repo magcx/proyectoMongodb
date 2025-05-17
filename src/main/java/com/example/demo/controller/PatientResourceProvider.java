@@ -6,10 +6,11 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.*;
-import com.example.demo.repository.PatientRepository;
+import com.example.demo.repository.ResourceRepository;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.InstantType;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Resource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import com.example.demo.service.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,14 +21,14 @@ import java.util.List;
 public class PatientResourceProvider implements IResourceProvider {
     private final JsonParser jsonParser;
     private final MongoTemplate mongoTemplate;
-    private final PatientRepository patientRepository;
-    private final PatientService patientService;
+    private ResourceRepository<Patient> patientRepository;
+    private PatientService patientService;
 
     public PatientResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
         this.jsonParser = jsonParser;
         this.mongoTemplate = mongoTemplate;
-        this.patientRepository = new PatientRepository(mongoTemplate, jsonParser);
+        this.patientRepository = new ResourceRepository<>(mongoTemplate, jsonParser);
         this.patientService = new PatientService(patientRepository);
     }
 

@@ -2,11 +2,9 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import com.example.demo.repository.ConditionRepository;
-import org.hl7.fhir.r4.model.Condition;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -16,7 +14,7 @@ import java.util.UUID;
 @Service
 public class ConditionService {
     private final ConditionRepository conditionRepository;
-
+//TODO(setMeta
     public ConditionService(ConditionRepository conditionRepository) {
         this.conditionRepository = conditionRepository;
     }
@@ -61,8 +59,8 @@ public class ConditionService {
     }
 //    TODO(El return)
 
-    public List<Condition> getConditions() {
-        return conditionRepository.getConditions();
+    public List<Condition> getConditions(ReferenceParam patientRef) {
+        return conditionRepository.getConditions(patientRef);
     }
 
     public OperationOutcome hasIdentifier(Condition theCondition) {

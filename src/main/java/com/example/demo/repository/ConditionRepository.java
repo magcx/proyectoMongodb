@@ -3,11 +3,13 @@ package com.example.demo.repository;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -86,12 +88,15 @@ public class ConditionRepository {
         return new MethodOutcome().setId(theId);
     }
 
-    public List<Condition> getConditions() {
-        List<String> conditionsJson = mongoTemplate.findAll(String.class,"condition");
-        if (conditionsJson.isEmpty()) {
+    public List<Condition> getConditions(ReferenceParam patientRef) {
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("patient.reference").is("Patient" + "/" + patientRef.getIdPart()),
+                Criteria.where("subject.reference").is("Patient" + "/" + patientRef.getIdPart()));
+        List<String> conditionJson = mongoTemplate.find(new Query(criteria), String.class,"condition");
+        if (conditionJson.isEmpty()) {
             throw new ResourceNotFoundException("No resources found");
         }
-        return conditionsJson.stream()
+        return conditionJson.stream()
                 .map(String -> jsonParser.parseResource(Condition.class, String))
                 .collect(Collectors.toList());
     }

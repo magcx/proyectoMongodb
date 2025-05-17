@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import com.example.demo.repository.MedicationStatementRepository;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.MedicationStatement;
@@ -50,7 +51,7 @@ public class MedicationStatementService {
         if (medicationStatementUpdated == null) {
             operationOutcome.addIssue()
                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setDiagnostics("Error actualizando paciente");
+                    .setDiagnostics("Error actualizando");
             return new MethodOutcome(operationOutcome).setCreated(false);
         }
         return new MethodOutcome().setResource(medicationStatementUpdated).setId(medicationStatementUpdated.getIdElement());
@@ -61,8 +62,8 @@ public class MedicationStatementService {
     }
 //    TODO(El return)
 
-    public List<MedicationStatement> getMedicationStatements() {
-        return medicationStatementRepository.getMedicationStatements();
+    public List<MedicationStatement> getMedicationStatements(ReferenceParam patientRef) {
+        return medicationStatementRepository.getMedicationStatements(patientRef);
     }
 
     public OperationOutcome hasIdentifier(MedicationStatement theMedicationStatement) {

@@ -4,9 +4,11 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.repository.MedicationStatementRepository;
 import com.example.demo.service.MedicationStatementService;
+import org.hl7.fhir.r4.model.AllergyIntolerance;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.MedicationStatement;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -59,7 +61,7 @@ public class MedicationStatementResourceProvider implements IResourceProvider {
     }
 
     @Search
-    public List<MedicationStatement> searchMedicationStatements(){
-        return medicationStatementService.getMedicationStatements();
+    public List<MedicationStatement> searchMedicationStatements(@RequiredParam(name = MedicationStatement.SP_PATIENT) ReferenceParam patientRef){
+        return medicationStatementService.getMedicationStatements(patientRef);
     }
 }

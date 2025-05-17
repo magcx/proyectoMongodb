@@ -3,12 +3,10 @@ package com.example.demo.repository;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.bson.Document;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.MedicationStatement;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -89,12 +87,15 @@ public class MedicationStatementRepository {
         return new MethodOutcome().setId(theId);
     }
 
-    public List<MedicationStatement> getMedicationStatements() {
-        List<String> medicationStatementsJson = mongoTemplate.findAll(String.class,"medicationStatement");
-        if (medicationStatementsJson.isEmpty()) {
-            throw new ResourceNotFoundException("No resourcess found");
+    public List<MedicationStatement> getMedicationStatements(ReferenceParam patientRef) {
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("patient.reference").is("Patient" + "/" + patientRef.getIdPart()),
+                Criteria.where("subject.reference").is("Patient" + "/" + patientRef.getIdPart()));
+        List<String> medicationStJson = mongoTemplate.find(new Query(criteria), String.class,"medicationStatement");
+        if (medicationStJson.isEmpty()) {
+            throw new ResourceNotFoundException("No resources found");
         }
-        return medicationStatementsJson.stream()
+        return medicationStJson.stream()
                 .map(String -> jsonParser.parseResource(MedicationStatement.class, String))
                 .collect(Collectors.toList());
     }

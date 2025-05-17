@@ -2,22 +2,19 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import com.example.demo.repository.PatientRepository;
+import com.example.demo.repository.ResourceRepository;
 import org.hl7.fhir.r4.model.*;
-import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 //TODO(Security attributes inside resources json)
 @Service
 public class PatientService {
-     private final PatientRepository patientRepository;
+     private final ResourceRepository<Patient> patientRepository;
 
-     public PatientService(PatientRepository patientRepository) {
+     public PatientService(ResourceRepository<Patient> patientRepository) {
          this.patientRepository = patientRepository;
      }
 
@@ -37,16 +34,19 @@ public class PatientService {
         meta.setVersionId("1");
         meta.setLastUpdated(new Date(System.currentTimeMillis()));
         thePatient.setMeta(meta);
-        return patientRepository.createPatient(thePatient, theRequestDetails, theId);
+        return patientRepository.createFhirResource(thePatient, theRequestDetails, theId, "patient",
+                thePatient.getIdentifierFirstRep().getSystem(), thePatient.getIdentifierFirstRep().getValue());
      }
 
      public Patient readPatient(IdType theId) {
-         return patientRepository.readPatient(theId);
+         return patientRepository.readFhirResource(theId, "patient",
+                 Patient.class);
      }
 
      public MethodOutcome updatePatient(IdType theId, Patient thePatient) {
          OperationOutcome operationOutcome = new OperationOutcome();
-         Patient patientUpdated = patientRepository.updatePatient(theId, thePatient);
+         Patient patientUpdated = patientRepository.updateFhirResource(theId, thePatient, "patient",
+                                Patient.class);
          if (patientUpdated == null) {
              operationOutcome.addIssue()
                      .setSeverity(OperationOutcome.IssueSeverity.ERROR)
@@ -57,12 +57,12 @@ public class PatientService {
      }
 
      public MethodOutcome deletePatient(IdType theId) {
-         return patientRepository.deletePatient(theId);
+         return patientRepository.deleteFhirResource(theId, "patient");
      }
 //    TODO(El return)
 
      public List<Patient> getPatients() {
-         return patientRepository.getPatients();
+         return patientRepository.getAllResourcesByType("patient", Patient.class);
      }
 
      public OperationOutcome hasIdentifier(Patient thePatient) {

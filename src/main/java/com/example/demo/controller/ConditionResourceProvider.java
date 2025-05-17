@@ -4,9 +4,11 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.service.ConditionService;
 import com.example.demo.repository.ConditionRepository;
+import org.hl7.fhir.r4.model.AllergyIntolerance;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.IdType;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -59,7 +61,7 @@ public class ConditionResourceProvider implements IResourceProvider {
     }
 
     @Search
-    public List<Condition> searchCondition(){
-        return conditionService.getConditions();
+    public List<Condition> searchCondition(@RequiredParam(name = AllergyIntolerance.SP_PATIENT) ReferenceParam patientRef){
+        return conditionService.getConditions(patientRef);
     }
 }
