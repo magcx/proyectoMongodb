@@ -2,78 +2,69 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import com.example.demo.repository.NutritionOrderRepository;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.NutritionOrder;
-import org.hl7.fhir.r4.model.OperationOutcome;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import com.example.demo.repository.ResourceRepository;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 //TODO(Security attributes inside resources json)
 @Service
 public class NutritionOrderService {
-     private final NutritionOrderRepository nutritionOrderRepository;
+    private final ResourceRepository<NutritionOrder> repository;
+    private final ResourceUtil<NutritionOrder> resourceUtil;
 
-     public NutritionOrderService(NutritionOrderRepository nutritionOrderRepository) {
-         this.nutritionOrderRepository = nutritionOrderRepository;
-     }
+    public NutritionOrderService(ResourceRepository<NutritionOrder> repository, ResourceUtil<NutritionOrder> resourceUtil) {
+        this.repository = repository;
+        this.resourceUtil = resourceUtil;
+    }
 
 //   "The server SHALL populate the id, meta.versionId and meta.lastUpdated with the new correct values."
      public MethodOutcome createNutritionOrder(NutritionOrder theNutritionOrder, RequestDetails theRequestDetails) {
-        OperationOutcome operationOutcome = hasIdentifier(theNutritionOrder);
-        if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
-        }
-        Meta meta = new Meta();
-        String theId = UUID.randomUUID().toString();
-        theNutritionOrder.setId(theId);
-        meta.setVersionId("1");
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
-        theNutritionOrder.setMeta(meta);
-        return nutritionOrderRepository.createNutritionOrder(theNutritionOrder, theRequestDetails, theId);
+         OperationOutcome operationOutcome = hasIdentifier(theNutritionOrder);
+         if (operationOutcome!= null) {
+             return resourceUtil.generateMethodOutcome(operationOutcome, 422, false);
+         }
+         String theId = resourceUtil.setId(theNutritionOrder);
+         resourceUtil.setMeta(theNutritionOrder);
+         return repository.createFhirResource(theNutritionOrder, theRequestDetails, theId,
+                 "nutritionOrder",
+                 theNutritionOrder.getIdentifierFirstRep().getSystem(), theNutritionOrder.getIdentifierFirstRep().getValue());
      }
 
      public NutritionOrder readNutritionOrder(IdType theId) {
-         return nutritionOrderRepository.readNutritionOrder(theId);
+         return repository.readFhirResource(theId, "nutritionOrder",
+                 NutritionOrder.class);
      }
 
      public MethodOutcome updateNutritionOrder(IdType theId, NutritionOrder theNutritionOrder) {
-         OperationOutcome operationOutcome = new OperationOutcome();
-         NutritionOrder nutritionOrderUpdated = nutritionOrderRepository.updateNutritionOrder(theId, theNutritionOrder);
-         if (nutritionOrderUpdated == null) {
-             operationOutcome.addIssue()
-                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                     .setDiagnostics("Error actualizando");
-             return new MethodOutcome(operationOutcome).setCreated(false);
+         NutritionOrder resourceUpdated = repository.updateFhirResource(theId, theNutritionOrder,
+                 "nutritionOrder",
+                 NutritionOrder.class);
+         if (resourceUpdated == null) {
+             OperationOutcome oo =  resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                     OperationOutcome.IssueType.PROCESSING, "Error actualizando recurso");
+             return resourceUtil.generateMethodOutcome(oo, 418, false);
          }
-         return new MethodOutcome().setResource(nutritionOrderUpdated).setId(nutritionOrderUpdated.getIdElement());
+         return resourceUtil.generateMethodOutcomeWithRes(resourceUpdated.getIdElement(), 200,
+                 false, theNutritionOrder);
      }
 
      public MethodOutcome deleteNutritionOrder(IdType theId) {
-         return nutritionOrderRepository.deleteNutritionOrder(theId);
+         return repository.deleteFhirResource(theId,
+                 "nutritionOrder");
      }
 //    TODO(El return)
 
-     public List<NutritionOrder> getNutritionOrders() {
-         return nutritionOrderRepository.getNutritionOrders();
-     }
+    public List<NutritionOrder> getNutritionOrders(ReferenceParam patientRef) {
+        return repository.getAllResourcesByRef(patientRef,"nutritionOrder", NutritionOrder.class);
+    }
 
      public OperationOutcome hasIdentifier(NutritionOrder theNutritionOrder) {
-         OperationOutcome operationOutcome = new OperationOutcome();
          if (theNutritionOrder.getIdentifier().isEmpty()) {
-             operationOutcome.addIssue()
-                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                     .setCode(OperationOutcome.IssueType.REQUIRED)
-                     .setDiagnostics("Identificador requerido");
-             return operationOutcome;
+             return resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                     OperationOutcome.IssueType.REQUIRED, "Identificador requerido");
          }
          return null;
      }

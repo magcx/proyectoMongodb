@@ -6,34 +6,27 @@ import com.example.demo.repository.ResourceRepository;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
+
 //TODO(Security attributes inside resources json)
 @Service
 public class PatientService {
      private final ResourceRepository<Patient> patientRepository;
+     private final ResourceUtil<Patient> serviceUtil;
 
-     public PatientService(ResourceRepository<Patient> patientRepository) {
+     public PatientService(ResourceRepository<Patient> patientRepository, ResourceUtil<Patient> patientServiceUtil) {
          this.patientRepository = patientRepository;
+         this.serviceUtil = patientServiceUtil;
      }
 
 //   "The server SHALL populate the id, meta.versionId and meta.lastUpdated with the new correct values."
      public MethodOutcome createPatient(Patient thePatient, RequestDetails theRequestDetails) {
         OperationOutcome operationOutcome = hasIdentifier(thePatient);
         if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
+            return serviceUtil.generateMethodOutcome(operationOutcome, 422, false);
         }
-        Meta meta = new Meta();
-        String theId = UUID.randomUUID().toString();
-        thePatient.setId(theId);
-        meta.setVersionId("1");
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
-        thePatient.setMeta(meta);
+        String theId = serviceUtil.setId(thePatient);
+        serviceUtil.setMeta(thePatient);
         return patientRepository.createFhirResource(thePatient, theRequestDetails, theId, "patient",
                 thePatient.getIdentifierFirstRep().getSystem(), thePatient.getIdentifierFirstRep().getValue());
      }
@@ -44,20 +37,20 @@ public class PatientService {
      }
 
      public MethodOutcome updatePatient(IdType theId, Patient thePatient) {
-         OperationOutcome operationOutcome = new OperationOutcome();
          Patient patientUpdated = patientRepository.updateFhirResource(theId, thePatient, "patient",
                                 Patient.class);
          if (patientUpdated == null) {
-             operationOutcome.addIssue()
-                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                     .setDiagnostics("Error actualizando paciente");
-             return new MethodOutcome(operationOutcome).setCreated(false);
+            OperationOutcome oo =  serviceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                     OperationOutcome.IssueType.PROCESSING, "Error actualizando recurso");
+            return serviceUtil.generateMethodOutcome(oo, 418, false);
          }
-         return new MethodOutcome().setResource(patientUpdated).setId(patientUpdated.getIdElement());
+         return serviceUtil.generateMethodOutcomeWithRes(patientUpdated.getIdElement(), 200,
+                 false, thePatient);
      }
 
      public MethodOutcome deletePatient(IdType theId) {
-         return patientRepository.deleteFhirResource(theId, "patient");
+         return patientRepository.deleteFhirResource(theId,
+                 "patient");
      }
 //    TODO(El return)
 
@@ -66,13 +59,9 @@ public class PatientService {
      }
 
      public OperationOutcome hasIdentifier(Patient thePatient) {
-         OperationOutcome operationOutcome = new OperationOutcome();
          if (thePatient.getIdentifier().isEmpty()) {
-             operationOutcome.addIssue()
-                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                     .setCode(OperationOutcome.IssueType.REQUIRED)
-                     .setDiagnostics("Identificador requerido");
-             return operationOutcome;
+             return serviceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                     OperationOutcome.IssueType.REQUIRED, "Identificador requerido");
          }
          return null;
      }
