@@ -18,15 +18,15 @@ import java.util.List;
 public class AllergyIntoleranceResourceProvider implements IResourceProvider {
     private final JsonParser jsonParser;
     private final MongoTemplate mongoTemplate;
-    private final AllergyIntoleranceRepository allergyIntoleranceRepository;
-    private final AllergyIntoleranceService allergyIntoleranceService;
+    private final AllergyIntoleranceRepository repository;
+    private final AllergyIntoleranceService service;
 
     public AllergyIntoleranceResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
         this.jsonParser = jsonParser;
         this.mongoTemplate = mongoTemplate;
-        this.allergyIntoleranceRepository = new AllergyIntoleranceRepository(mongoTemplate, jsonParser);
-        this.allergyIntoleranceService = new AllergyIntoleranceService(allergyIntoleranceRepository);
+        this.repository = new AllergyIntoleranceRepository(mongoTemplate, jsonParser);
+        this.service = new AllergyIntoleranceService(repository);
     }
 
     @Override
@@ -38,28 +38,28 @@ public class AllergyIntoleranceResourceProvider implements IResourceProvider {
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
     public MethodOutcome createAllergyIntolerance(@ResourceParam AllergyIntolerance theAllergyIntolerance, RequestDetails theRequestDetails) {
-        return allergyIntoleranceService.createAllergyIntolerance(theAllergyIntolerance, theRequestDetails);
+        return service.createAllergyIntolerance(theAllergyIntolerance, theRequestDetails);
     }
 
     //   OK
     @Read()
     public AllergyIntolerance readAllergyIntolerance(@IdParam IdType theId) {
-        return allergyIntoleranceService.readAllergyIntolerance(theId);
+        return service.readAllergyIntolerance(theId);
     }
 
     //    OK
     @Update
     public MethodOutcome updateAllergyIntolerance(@IdParam IdType theId, @ResourceParam AllergyIntolerance theAllergyIntolerance) {
-        return allergyIntoleranceService.updateAllergyIntolerance(theId, theAllergyIntolerance);
+        return service.updateAllergyIntolerance(theId, theAllergyIntolerance);
     }
 
     @Delete
     public MethodOutcome deleteAllergyIntolerance(@IdParam IdType theId) {
-        return allergyIntoleranceService.deleteAllergyIntolerance(theId);
+        return service.deleteAllergyIntolerance(theId);
     }
 
     @Search
     public List<AllergyIntolerance> searchAllergiesIntolerances(@RequiredParam(name = AllergyIntolerance.SP_PATIENT) ReferenceParam patientRef) {
-        return allergyIntoleranceService.getAllergiesIntolerances(patientRef);
+        return service.getAllergiesIntolerances(patientRef);
     }
 }

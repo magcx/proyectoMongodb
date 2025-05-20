@@ -2,68 +2,67 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.example.demo.repository.ObservationRepository;
+import com.example.demo.repository.ResourceRepository;
 import org.hl7.fhir.r4.model.*;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ObservationService {
-    private final ObservationRepository observationRepository;
+    private final ResourceRepository<Observation> repository;
+    private final ResourceUtil<Observation> resourceUtil;
 
-    public ObservationService(ObservationRepository observationRepository) {
-        this.observationRepository = observationRepository;
+    public ObservationService(ResourceRepository<Observation> repository, ResourceUtil<Observation> resourceUtil) {
+        this.repository = repository;
+        this.resourceUtil = resourceUtil;
     }
 
     public MethodOutcome createObservation(Observation theObservation, RequestDetails theRequestDetails) {
-        OperationOutcome operationOutcome = hasIdentifier(theObservation);
-        if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
-        }
         Meta meta = new Meta();
         String theId = UUID.randomUUID().toString();
         theObservation.setId(theId);
         meta.setVersionId("1");
         meta.setLastUpdated(new Date(System.currentTimeMillis()));
         theObservation.setMeta(meta);
-        return observationRepository.createObservation(theObservation, theRequestDetails, theId);
+        return repository.createFhirResource(theObservation, theRequestDetails, theId, "observation",
+                null, null);
     }
 
     public Observation readObservation(IdType theId) {
-        return observationRepository.readObservation(theId);
+        return repository.readFhirResource(theId, "observation",
+                Observation.class);
     }
 
     public MethodOutcome updateObservation(IdType theId, Observation theObservation) {
         OperationOutcome operationOutcome = new OperationOutcome();
-        Observation observationUpdated = observationRepository.updateObservation(theId, theObservation);
+        Observation observationUpdated = repository.updateFhirResource(theId, theObservation, "observation",
+                Observation.class);;
         if (observationUpdated == null) {
             operationOutcome.addIssue()
                     .setSeverity(OperationOutcome.IssueSeverity.ERROR)
                     .setDiagnostics("Error actualizando observation");
             return new MethodOutcome(operationOutcome).setCreated(false);
         }
-        return new MethodOutcome().setResource(observationUpdated).setId(observationUpdated.getIdElement());
+        return resourceUtil.generateMethodOutcomeWithRes(observationUpdated.getIdElement(), 200,
+                false, theObservation);
     }
 
     public MethodOutcome deleteObservation(IdType theId) {
-        return observationRepository.deleteObservation(theId);
+        return repository.deleteFhirResource(theId,
+                "observation");
     }
 
-    public OperationOutcome hasIdentifier(Observation theObservation) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        if (theObservation.getIdentifier().isEmpty()) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setCode(OperationOutcome.IssueType.REQUIRED)
-                    .setDiagnostics("Identificador requerido");
-            return operationOutcome;
-        }
-        return null;
+    public List<Observation> getObservations(ReferenceParam patientRef) {
+        return repository.getAllResourcesByRef(patientRef, "observation", Observation.class);
     }
+
 }

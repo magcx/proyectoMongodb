@@ -13,8 +13,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 @Repository
@@ -29,13 +32,15 @@ public class ResourceRepository <T extends DomainResource> {
 // OK
     public MethodOutcome createFhirResource(T theResource, RequestDetails theRequestDetails, String theId,
                                             String resourceCollection, String identifierSystem, String identifierValue) {
-        if (resourceExists(identifierSystem, identifierValue, resourceCollection) != null) {
-            OperationOutcome operationOutcome = new OperationOutcome();
-            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
-                    .setDiagnostics("Duplicate");
-            MethodOutcome methodOutcome = new MethodOutcome(theResource.getIdElement(), operationOutcome, false);
-            methodOutcome.setResponseStatusCode(422);
-            return methodOutcome;
+        if (theResource.getResourceType() == ResourceType.Patient){
+            if (resourceExists(identifierSystem, identifierValue, resourceCollection) != null) {
+                OperationOutcome operationOutcome = new OperationOutcome();
+                operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
+                        .setDiagnostics("Duplicate");
+                MethodOutcome methodOutcome = new MethodOutcome(theResource.getIdElement(), operationOutcome, false);
+                methodOutcome.setResponseStatusCode(422);
+                return methodOutcome;
+            }
         }
         mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(theResource)),
                 resourceCollection);
@@ -70,7 +75,9 @@ public class ResourceRepository <T extends DomainResource> {
         String versionId = String.valueOf((Integer.parseInt(resourceFound.getMeta().getVersionId())) + 1);
         Meta meta = new Meta();
         meta.setVersionId(versionId);
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
+        calendar.setTime(new Date());
+        meta.setLastUpdated(calendar.getTime());
         updatedResource.setMeta(meta);
         return updatedResource;
     }

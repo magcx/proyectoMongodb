@@ -28,14 +28,14 @@ public class ObservationRepository {
 
     public MethodOutcome createObservation(Observation theObservation, RequestDetails theRequestDetails, String theId){
         theObservation.setId(UUID.randomUUID().toString());  //Se lo toma como que no tiene id
-        if (observationFound(theObservation) != null) {
-            OperationOutcome operationOutcome = new OperationOutcome();
-            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
-                    .setDiagnostics("Duplicate observation");
-            MethodOutcome methodOutcome = new MethodOutcome(theObservation.getIdElement(), operationOutcome, false);
-            methodOutcome.setResponseStatusCode(422);
-            return methodOutcome;
-        }
+//        if (observationFound(theObservation) != null) {
+//            OperationOutcome operationOutcome = new OperationOutcome();
+//            operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
+//                    .setDiagnostics("Duplicate observation");
+//            MethodOutcome methodOutcome = new MethodOutcome(theObservation.getIdElement(), operationOutcome, false);
+//            methodOutcome.setResponseStatusCode(422);
+//            return methodOutcome;
+//        }
         mongoTemplate.insert(Document.parse(jsonParser.encodeResourceToString(theObservation)),
                 "observation");
         MethodOutcome methodOutcome = new MethodOutcome();
@@ -88,12 +88,12 @@ public class ObservationRepository {
         return new MethodOutcome(operationOutcome);
     }
 
-    public String observationFound(Observation theObservation){
-        String identifierSystem = theObservation.getIdentifierFirstRep().getSystem();
-        String identifierValue = theObservation.getIdentifierFirstRep().getValue();
-        Criteria criteria = Criteria.where("identifier").elemMatch(
-                Criteria.where("system").is(identifierSystem)
-                        .and("value").is(identifierValue));
-        return mongoTemplate.findOne(new Query(criteria), String.class,"observation");
-    }
+//    public String observationFound(Observation theObservation){
+//        String identifierSystem = theObservation.getIdentifierFirstRep().getSystem();
+//        String identifierValue = theObservation.getIdentifierFirstRep().getValue();
+//        Criteria criteria = Criteria.where("identifier").elemMatch(
+//                Criteria.where("system").is(identifierSystem)
+//                        .and("value").is(identifierValue));
+//        return mongoTemplate.findOne(new Query(criteria), String.class,"observation");
+//    }
 }
