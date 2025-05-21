@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.model.OrganizationUser;
 import com.example.demo.repository.OrganizationUserRepository;
+import com.example.demo.security.JWTService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

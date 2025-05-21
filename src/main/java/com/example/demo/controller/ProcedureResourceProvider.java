@@ -8,7 +8,7 @@ import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.repository.ResourceRepository;
 import com.example.demo.service.ProcedureService;
-import com.example.demo.service.ResourceUtil;
+import com.example.demo.util.ResourceUtil;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Procedure;
 import org.springframework.data.mongodb.core.MongoTemplate;

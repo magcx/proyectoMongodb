@@ -1,4 +1,4 @@
-package com.example.demo.service;
+package com.example.demo.util;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import org.hl7.fhir.r4.model.DomainResource;

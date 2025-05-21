@@ -13,10 +13,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import javax.crypto.SecretKey;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -28,7 +26,7 @@ public class ResourceRepository <T extends DomainResource> {
         this.mongoTemplate = mongoTemplate;
         this.jsonParser = jsonParser;
     }
-// OK
+
     public MethodOutcome createFhirResource(T theResource, RequestDetails theRequestDetails, String theId,
                                             String resourceCollection, String identifierSystem, String identifierValue) {
         if (theResource.getResourceType() == ResourceType.Patient){
@@ -50,7 +48,7 @@ public class ResourceRepository <T extends DomainResource> {
                 theId, "1"));
         return methodOutcome;
     }
-    //OK
+
     public <R extends DomainResource> R readFhirResource(IdType theId, String resourceCollection, Class<R> resourceClass) {
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         String json = mongoTemplate.findOne(new Query(criteria), String.class,resourceCollection);
@@ -80,7 +78,7 @@ public class ResourceRepository <T extends DomainResource> {
         updatedResource.setMeta(meta);
         return updatedResource;
     }
-    //    OK
+
     public MethodOutcome deleteFhirResource(IdType theId, String resourceCollection){
         OperationOutcome operationOutcome = new OperationOutcome();
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
@@ -92,7 +90,7 @@ public class ResourceRepository <T extends DomainResource> {
         }
         return new MethodOutcome().setId(theId);
     }
-//OK
+
     public <R extends DomainResource> List<R> getAllResourcesByType(String resourceCollection, Class<R> resourceClass) {
         List<String> jsonResource = mongoTemplate.findAll(String.class, resourceCollection);
         if (jsonResource.isEmpty()) {
@@ -110,8 +108,7 @@ public class ResourceRepository <T extends DomainResource> {
         return mongoTemplate.findOne(new Query(criteria), String.class, resourceCollection);
     }
 
-    public <R extends DomainResource> List<R> getAllResourcesByRef(ReferenceParam patientRef, String resourceCollection,
-                                                                   Class<R> resourceClass) {
+    public <R extends DomainResource> List<R> getAllResourcesByRef(ReferenceParam patientRef, String resourceCollection, Class<R> resourceClass) {
         Criteria criteria = new Criteria().orOperator(
                 Criteria.where("patient.reference").is("Patient" + "/" + patientRef.getIdPart()),
                 Criteria.where("subject.reference").is("Patient" + "/" + patientRef.getIdPart()));
@@ -122,5 +119,11 @@ public class ResourceRepository <T extends DomainResource> {
         return resourceJson.stream()
                 .map(String -> jsonParser.parseResource(resourceClass, String))
                 .collect(Collectors.toList());
+    }
+
+    public void storeSecretKey(String id, SecretKey secretKey){
+        String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+        Document key = new Document("id :", id).append("key: ", encodedKey);
+        mongoTemplate.insert(key, "dek");
     }
 }

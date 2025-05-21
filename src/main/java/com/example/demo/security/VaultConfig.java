@@ -1,4 +1,4 @@
-package com.example.demo.config;
+package com.example.demo.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,4 +25,4 @@ public class VaultConfig extends AbstractVaultConfiguration {
     public VaultTemplate vaultTemplate(VaultEndpoint vaultEndpoint, ClientAuthentication clientAuthentication ) {
         return new VaultTemplate(vaultEndpoint,clientAuthentication);
     }
-}
+}git
