@@ -6,9 +6,9 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import com.example.demo.repository.ResourceRepository;
 import com.example.demo.service.ConditionService;
-import com.example.demo.repository.ConditionRepository;
-import org.hl7.fhir.r4.model.AllergyIntolerance;
+import com.example.demo.service.ResourceUtil;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.IdType;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,17 +18,13 @@ import java.util.List;
 
 @RestController
 public class ConditionResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private final ConditionRepository conditionRepository;
-    private final ConditionService conditionService;
+    private final ConditionService service;
 
     public ConditionResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.conditionRepository = new ConditionRepository(mongoTemplate, jsonParser);
-        this.conditionService = new ConditionService(conditionRepository);
+        ResourceRepository<Condition> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<Condition> resourceUtil = new ResourceUtil<>();
+        this.service = new ConditionService(repository, resourceUtil);
     }
 
     @Override
@@ -40,28 +36,28 @@ public class ConditionResourceProvider implements IResourceProvider {
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
     public MethodOutcome createCondition(@ResourceParam Condition theCondition, RequestDetails theRequestDetails) {
-        return conditionService.createCondition(theCondition, theRequestDetails);
+        return service.createCondition(theCondition, theRequestDetails);
     }
 
     //   OK
     @Read()
     public Condition readCondition(@IdParam IdType theId) {
-        return conditionService.readCondition(theId);
+        return service.readCondition(theId);
     }
 
     //    OK
     @Update
     public MethodOutcome updateCondition(@IdParam IdType theId, @ResourceParam Condition theCondition) {
-        return conditionService.updateCondition(theId, theCondition);
+        return service.updateCondition(theId, theCondition);
     }
 
     @Delete
     public MethodOutcome deleteCondition(@IdParam IdType theId) {
-        return conditionService.deleteCondition(theId);
+        return service.deleteCondition(theId);
     }
 
     @Search
-    public List<Condition> searchCondition(@RequiredParam(name = AllergyIntolerance.SP_PATIENT) ReferenceParam patientRef){
-        return conditionService.getConditions(patientRef);
+    public List<Condition> searchCondition(@RequiredParam(name = Condition.SP_PATIENT) ReferenceParam patientRef){
+        return service.getConditions(patientRef);
     }
 }

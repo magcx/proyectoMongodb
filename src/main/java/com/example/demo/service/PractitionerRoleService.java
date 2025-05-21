@@ -2,71 +2,65 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import com.example.demo.repository.PractitionerRoleRepository;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.PractitionerRole;
+import com.example.demo.repository.ResourceRepository;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.UUID;
+import java.util.List;
 
 @Service
 public class PractitionerRoleService {
-    private final PractitionerRoleRepository practitionerRoleRepository;
+    private final ResourceRepository<PractitionerRole> repository;
+    private final ResourceUtil<PractitionerRole> resourceUtil;
 
-    public PractitionerRoleService(PractitionerRoleRepository practitionerRoleRepository) {
-        this.practitionerRoleRepository = practitionerRoleRepository;
+    public PractitionerRoleService(ResourceRepository<PractitionerRole> repository,
+                                   ResourceUtil<PractitionerRole> resourceUtil) {
+        this.repository = repository;
+        this.resourceUtil = resourceUtil;
     }
 
     public MethodOutcome createPractitionerRole(PractitionerRole thePractitionerRole, RequestDetails theRequestDetails) {
         OperationOutcome operationOutcome = hasIdentifier(thePractitionerRole);
         if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
+            return resourceUtil.generateMethodOutcome(operationOutcome, 422, false);
         }
-        Meta meta = new Meta();
-        String theId = UUID.randomUUID().toString();
-        thePractitionerRole.setId(theId);
-        meta.setVersionId("1");
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
-        thePractitionerRole.setMeta(meta);
-        return practitionerRoleRepository.createPractitionerRole(thePractitionerRole,theRequestDetails, theId);
+        String theId = resourceUtil.setId(thePractitionerRole);
+        resourceUtil.setMeta(thePractitionerRole);
+        return repository.createFhirResource(thePractitionerRole, theRequestDetails, theId, "practitionerRole",
+                thePractitionerRole.getIdentifierFirstRep().getSystem(), thePractitionerRole.getIdentifierFirstRep().getValue());
     }
 
     public PractitionerRole readPractitionerRole(IdType theId) {
-        return practitionerRoleRepository.readPractitionerRole(theId);
+        return repository.readFhirResource(theId, "practitionerRole",
+                PractitionerRole.class);
     }
 
     public MethodOutcome updatePractitionerRole(IdType theId, PractitionerRole thePractitionerRole) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        PractitionerRole practitionerRoleUpdated = practitionerRoleRepository.updatePractitionerRole(theId, thePractitionerRole);
-        if (practitionerRoleUpdated == null) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setDiagnostics("Error actualizando paciente");
-            return new MethodOutcome(operationOutcome).setCreated(false);
+        PractitionerRole resourceUpdated = repository.updateFhirResource(theId, thePractitionerRole, "practitionerRole",
+                PractitionerRole.class);
+        if (resourceUpdated == null) {
+            OperationOutcome oo =  resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                    OperationOutcome.IssueType.PROCESSING, "Error actualizando recurso");
+            return resourceUtil.generateMethodOutcome(oo, 418, false);
         }
-        return new MethodOutcome().setResource(practitionerRoleUpdated).setId(practitionerRoleUpdated.getIdElement());
+        return resourceUtil.generateMethodOutcomeWithRes(resourceUpdated.getIdElement(), 200,
+                false, thePractitionerRole);
     }
 
     public MethodOutcome deletePractitionerRole(IdType theId) {
-        return practitionerRoleRepository.deletePractitionerRole(theId);
+        return repository.deleteFhirResource(theId,
+                "practitionerRole");
     }
-//    TODO(El return)
+
+    public List<PractitionerRole> getPractitionerRoles() {
+        return repository.getAllResourcesByType("practitionerRole",
+                PractitionerRole.class);
+    }
 
     public OperationOutcome hasIdentifier(PractitionerRole thePractitionerRole) {
-        OperationOutcome operationOutcome = new OperationOutcome();
         if (thePractitionerRole.getIdentifier().isEmpty()) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setCode(OperationOutcome.IssueType.REQUIRED)
-                    .setDiagnostics("Identificador requerido");
-            return operationOutcome;
+            return resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                    OperationOutcome.IssueType.REQUIRED, "Identificador requerido");
         }
         return null;
     }

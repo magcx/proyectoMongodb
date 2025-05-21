@@ -3,76 +3,56 @@ package com.example.demo.service;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
-import ca.uhn.fhir.rest.param.StringParam;
-import com.example.demo.repository.AllergyIntoleranceRepository;
+import com.example.demo.repository.ResourceRepository;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class AllergyIntoleranceService {
-    private final AllergyIntoleranceRepository allergyIntoleranceRepository;
+    private final ResourceRepository<AllergyIntolerance> repository;
+    private final ResourceUtil<AllergyIntolerance> resourceUtil;
 
-    public AllergyIntoleranceService(AllergyIntoleranceRepository allergyIntoleranceRepository) {
-        this.allergyIntoleranceRepository = allergyIntoleranceRepository;
+    public AllergyIntoleranceService(ResourceRepository<AllergyIntolerance> repository,
+                                     ResourceUtil<AllergyIntolerance> resourceUtil) {
+        this.repository = repository;
+        this.resourceUtil = resourceUtil;
     }
 
     //   "The server SHALL populate the id, meta.versionId and meta.lastUpdated with the new correct values."
-    public MethodOutcome createAllergyIntolerance(AllergyIntolerance theAllergyIntolerance, RequestDetails theRequestDetails) {
-        OperationOutcome operationOutcome = hasIdentifier(theAllergyIntolerance);
-        if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
-        }
-        Meta meta = new Meta();
-        String theId = UUID.randomUUID().toString();
-        theAllergyIntolerance.setId(theId);
-        meta.setVersionId("1");
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
-        theAllergyIntolerance.setMeta(meta);
-        return allergyIntoleranceRepository.createAllergyIntolerance(theAllergyIntolerance, theRequestDetails, theId);
+    public MethodOutcome createAllergyIntolerance(AllergyIntolerance theAllergyIntolerance,
+                                                  RequestDetails theRequestDetails) {
+        String theId = resourceUtil.setId(theAllergyIntolerance);
+        resourceUtil.setMeta(theAllergyIntolerance);
+        return repository.createFhirResource(theAllergyIntolerance, theRequestDetails, theId,
+                "allergyIntolerance", theAllergyIntolerance.getIdentifierFirstRep().getSystem(),
+                theAllergyIntolerance.getIdentifierFirstRep().getValue());
     }
 
     public AllergyIntolerance readAllergyIntolerance(IdType theId) {
-        return allergyIntoleranceRepository.readAllergyIntolerance(theId);
+        return repository.readFhirResource(theId, "allergyIntolerance",
+                AllergyIntolerance.class);
     }
 
     public MethodOutcome updateAllergyIntolerance(IdType theId, AllergyIntolerance theAllergyIntolerance) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        AllergyIntolerance allergyIntoleranceUpdated = allergyIntoleranceRepository.updateAllergyIntolerance(theId, theAllergyIntolerance);
-        if (allergyIntoleranceUpdated == null) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setDiagnostics("Error actualizando paciente");
-            return new MethodOutcome(operationOutcome).setCreated(false);
+        AllergyIntolerance resourceUpdated = repository.updateFhirResource(theId, theAllergyIntolerance,
+                "allergyIntolerance",
+                AllergyIntolerance.class);
+        if (resourceUpdated == null) {
+            OperationOutcome oo =  resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                    OperationOutcome.IssueType.PROCESSING, "Error actualizando recurso");
+            return resourceUtil.generateMethodOutcome(oo, 418, false);
         }
-        return new MethodOutcome().setResource(allergyIntoleranceUpdated).setId(allergyIntoleranceUpdated.getIdElement());
+        return resourceUtil.generateMethodOutcomeWithRes(resourceUpdated.getIdElement(), 200,
+                false, theAllergyIntolerance);
     }
 
     public MethodOutcome deleteAllergyIntolerance(IdType theId) {
-        return allergyIntoleranceRepository.deleteAllergyIntolerance(theId);
+        return repository.deleteFhirResource(theId,
+                "allergyIntolerance");
     }
-//    TODO(El return)
 
     public List<AllergyIntolerance> getAllergiesIntolerances(ReferenceParam patientRef) {
-        return allergyIntoleranceRepository.getAllergiesIntolerances(patientRef);
-    }
-
-    public OperationOutcome hasIdentifier(AllergyIntolerance theAllergyIntolerance) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        if (theAllergyIntolerance.getIdentifier().isEmpty()) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setCode(OperationOutcome.IssueType.REQUIRED)
-                    .setDiagnostics("Identificador requerido");
-            return operationOutcome;
-        }
-        return null;
+        return repository.getAllResourcesByRef(patientRef, "allergyIntolerance", AllergyIntolerance.class);
     }
 }

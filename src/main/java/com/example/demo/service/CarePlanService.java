@@ -2,71 +2,55 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import com.example.demo.repository.CarePlanRepository;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.CarePlan;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import com.example.demo.repository.ResourceRepository;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.UUID;
+import java.util.List;
 
 @Service
 public class CarePlanService {
-    private final CarePlanRepository carePlanRepository;
+    private final ResourceRepository<CarePlan> repository;
+    private final ResourceUtil<CarePlan> resourceUtil;
 
-    public CarePlanService(CarePlanRepository carePlanRepository) {
-        this.carePlanRepository = carePlanRepository;
+    public CarePlanService(ResourceRepository<CarePlan> repository, ResourceUtil<CarePlan> resourceUtil) {
+        this.repository = repository;
+        this.resourceUtil = resourceUtil;
     }
 
     public MethodOutcome createCarePlan(CarePlan theCarePlan, RequestDetails theRequestDetails) {
-        OperationOutcome operationOutcome = hasIdentifier(theCarePlan);
-        if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
-        }
-        Meta meta = new Meta();
-        String theId = UUID.randomUUID().toString();
-        theCarePlan.setId(theId);
-        meta.setVersionId("1");
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
-        theCarePlan.setMeta(meta);
-        return carePlanRepository.createCarePlan(theCarePlan, theRequestDetails, theId);
+        String theId = resourceUtil.setId(theCarePlan);
+        resourceUtil.setMeta(theCarePlan);
+        return repository.createFhirResource(theCarePlan, theRequestDetails, theId,
+                "carePlan", theCarePlan.getIdentifierFirstRep().getSystem(),
+                theCarePlan.getIdentifierFirstRep().getValue());
     }
 
     public CarePlan readCarePlan(IdType theId) {
-        return carePlanRepository.readCarePlan(theId);
+        return repository.readFhirResource(theId, "carePlan",
+                CarePlan.class);
     }
 
     public MethodOutcome updateCarePlan(IdType theId, CarePlan theCarePlan) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        CarePlan carePlanUpdated = carePlanRepository.updateCarePlan(theId, theCarePlan);
-        if (carePlanUpdated == null) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setDiagnostics("Error actualizando plan de cuidados");
-            return new MethodOutcome(operationOutcome).setCreated(false);
+        CarePlan resourceUpdated = repository.updateFhirResource(theId, theCarePlan,
+                "carePlan",
+                CarePlan.class);
+        if (resourceUpdated == null) {
+            OperationOutcome oo =  resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                    OperationOutcome.IssueType.PROCESSING, "Error actualizando recurso");
+            return resourceUtil.generateMethodOutcome(oo, 418, false);
         }
-        return new MethodOutcome().setResource(carePlanUpdated).setId(carePlanUpdated.getIdElement());
+        return resourceUtil.generateMethodOutcomeWithRes(resourceUpdated.getIdElement(), 200,
+                false, theCarePlan);
     }
 
     public MethodOutcome deleteCarePlan(IdType theId) {
-        return carePlanRepository.deleteCarePlan(theId);
+        return repository.deleteFhirResource(theId,
+                "carePlan");
     }
 
-    public OperationOutcome hasIdentifier(CarePlan theCarePlan) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        if (theCarePlan.getIdentifier().isEmpty()) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setCode(OperationOutcome.IssueType.REQUIRED)
-                    .setDiagnostics("Identificador requerido");
-            return operationOutcome;
-        }
-        return null;
+    public List<CarePlan> getCarePlans(ReferenceParam patientRef) {
+        return repository.getAllResourcesByRef(patientRef, "carePlan", CarePlan.class);
     }
 }

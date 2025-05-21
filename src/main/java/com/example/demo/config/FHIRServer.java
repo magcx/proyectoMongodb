@@ -28,8 +28,11 @@ public class FHIRServer extends RestfulServer {
 
     @Override
     protected void initialize() {
-//        TODO(-Encriptar identificador(SS), nombres desde servidor con MongoDB Lib mongocrypt)
-//         - Mongo validation rules (en la DB)
+//        TODO(-Encriptar identificador(SS), nombres desde servidor con MongoDB Lib mongocrypt
+//          - Mongo validation rules (en la DB)
+//          - https://build.fhir.org/security.html
+//          - Security attributes inside resources json
+//        )
         setFhirContext(getFhirContext());
         registerInterceptor(loggingInterceptor());
         registerInterceptor(requestValidatingInterceptor(fhirValidator));
@@ -42,8 +45,8 @@ public class FHIRServer extends RestfulServer {
                 new ObservationResourceProvider(jsonParser, mongoTemplate),
                 new PatientResourceProvider(jsonParser, mongoTemplate),
                 new AllergyIntoleranceResourceProvider(jsonParser, mongoTemplate),
+                new NutritionOrderResourceProvider(jsonParser, mongoTemplate),
                 new ConditionResourceProvider(jsonParser, mongoTemplate),
-                new MedicationResourceProvider(jsonParser, mongoTemplate),
                 new MedicationStatementResourceProvider(jsonParser, mongoTemplate)
         );
         FifoMemoryPagingProvider pagingProvider = new FifoMemoryPagingProvider(10);

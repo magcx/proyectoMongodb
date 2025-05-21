@@ -6,7 +6,6 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import org.hl7.fhir.r4.model.AllergyIntolerance;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Observation;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,23 +17,16 @@ import java.util.List;
 
 @RestController
 public class ObservationResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private final ResourceRepository<Observation> repository;
     private final ObservationService service;
-    private ResourceUtil<Observation> resourceUtil;
 
     public ObservationResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.repository = new ResourceRepository<>(mongoTemplate, jsonParser);
-        this.resourceUtil = new ResourceUtil<>();
+        ResourceRepository<Observation> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<Observation> resourceUtil = new ResourceUtil<>();
         this.service = new ObservationService(repository, resourceUtil);
     }
     @Override
     public Class<Observation> getResourceType() {
-
         return Observation.class;
     }
 

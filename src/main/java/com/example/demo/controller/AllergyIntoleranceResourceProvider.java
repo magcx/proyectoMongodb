@@ -6,8 +6,9 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import com.example.demo.repository.AllergyIntoleranceRepository;
+import com.example.demo.repository.ResourceRepository;
 import com.example.demo.service.AllergyIntoleranceService;
+import com.example.demo.service.ResourceUtil;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,17 +17,13 @@ import java.util.List;
 
 @RestController
 public class AllergyIntoleranceResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private final AllergyIntoleranceRepository repository;
     private final AllergyIntoleranceService service;
 
     public AllergyIntoleranceResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.repository = new AllergyIntoleranceRepository(mongoTemplate, jsonParser);
-        this.service = new AllergyIntoleranceService(repository);
+        ResourceRepository<AllergyIntolerance> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<AllergyIntolerance> resourceUtil = new ResourceUtil<>();
+        this.service = new AllergyIntoleranceService(repository, resourceUtil);
     }
 
     @Override
@@ -37,7 +34,8 @@ public class AllergyIntoleranceResourceProvider implements IResourceProvider {
     //CRUD
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
-    public MethodOutcome createAllergyIntolerance(@ResourceParam AllergyIntolerance theAllergyIntolerance, RequestDetails theRequestDetails) {
+    public MethodOutcome createAllergyIntolerance(@ResourceParam AllergyIntolerance theAllergyIntolerance,
+                                                  RequestDetails theRequestDetails) {
         return service.createAllergyIntolerance(theAllergyIntolerance, theRequestDetails);
     }
 
@@ -49,7 +47,8 @@ public class AllergyIntoleranceResourceProvider implements IResourceProvider {
 
     //    OK
     @Update
-    public MethodOutcome updateAllergyIntolerance(@IdParam IdType theId, @ResourceParam AllergyIntolerance theAllergyIntolerance) {
+    public MethodOutcome updateAllergyIntolerance(@IdParam IdType theId,
+                                                  @ResourceParam AllergyIntolerance theAllergyIntolerance) {
         return service.updateAllergyIntolerance(theId, theAllergyIntolerance);
     }
 
@@ -59,7 +58,8 @@ public class AllergyIntoleranceResourceProvider implements IResourceProvider {
     }
 
     @Search
-    public List<AllergyIntolerance> searchAllergiesIntolerances(@RequiredParam(name = AllergyIntolerance.SP_PATIENT) ReferenceParam patientRef) {
+    public List<AllergyIntolerance> searchAllergiesIntolerances(@RequiredParam(name = AllergyIntolerance.SP_PATIENT)
+                                                                    ReferenceParam patientRef) {
         return service.getAllergiesIntolerances(patientRef);
     }
 }

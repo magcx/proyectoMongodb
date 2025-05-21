@@ -4,8 +4,9 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.*;
-import com.example.demo.repository.CarePlanRepository;
+import com.example.demo.repository.ResourceRepository;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.IdType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,20 +14,19 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import com.example.demo.service.*;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class CarePlanResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private final CarePlanRepository carePlanRepository;
-    private final CarePlanService carePlanService;
+    private final CarePlanService service;
+
 
     @Autowired
     public CarePlanResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.carePlanRepository = new CarePlanRepository(mongoTemplate, jsonParser);
-        this.carePlanService = new CarePlanService(carePlanRepository);
+        ResourceRepository<CarePlan> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<CarePlan> resourceUtil = new ResourceUtil<>();
+        this.service = new CarePlanService(repository, resourceUtil);
     }
 
     @Override
@@ -38,28 +38,29 @@ public class CarePlanResourceProvider implements IResourceProvider {
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
     public MethodOutcome createCarePlan(@ResourceParam CarePlan theCarePlan, RequestDetails theRequestDetails) {
-        return carePlanService.createCarePlan(theCarePlan, theRequestDetails);
+        return service.createCarePlan(theCarePlan, theRequestDetails);
     }
 
     //   OK
     @Read()
     public CarePlan readCarePlan(@IdParam IdType theId) {
-        return carePlanService.readCarePlan(theId);
+        return service.readCarePlan(theId);
     }
 
     //    OK
     @Update
     public MethodOutcome updateCarePlan(@IdParam IdType theId, @ResourceParam CarePlan theCarePlan) {
-        return carePlanService.updateCarePlan(theId, theCarePlan);
+        return service.updateCarePlan(theId, theCarePlan);
     }
 
     @Delete
     public MethodOutcome deleteCarePlan(@IdParam IdType theId) {
-        return carePlanService.deleteCarePlan(theId);
+        return service.deleteCarePlan(theId);
     }
 
-//    @Search
-//    public OperationOutcome searchCarePlan(){
-//        return null;
-//    }
+    @Search
+    public List<CarePlan> searchCarePlans(@RequiredParam(name = CarePlan.SP_PATIENT)
+                                          ReferenceParam patientRef) {
+        return service.getCarePlans(patientRef);
+    }
 }

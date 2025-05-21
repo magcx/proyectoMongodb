@@ -2,72 +2,55 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import com.example.demo.repository.ProcedureRepository;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
-import org.hl7.fhir.r4.model.Procedure;
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import com.example.demo.repository.ResourceRepository;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.UUID;
+import java.util.List;
 
 @Service
 public class ProcedureService {
-    private final ProcedureRepository procedureRepository;
+    private final ResourceRepository<Procedure> repository;
+    private final ResourceUtil<Procedure> resourceUtil;
 
-    public ProcedureService(ProcedureRepository procedureRepository) {
-        this.procedureRepository = procedureRepository;
+    public ProcedureService(ResourceRepository<Procedure> repository, ResourceUtil<Procedure> resourceUtil) {
+        this.repository = repository;
+        this.resourceUtil = resourceUtil;
     }
 
     public MethodOutcome createProcedure(Procedure theProcedure, RequestDetails theRequestDetails) {
-        OperationOutcome operationOutcome = hasIdentifier(theProcedure);
-        if (operationOutcome!= null) {
-            MethodOutcome methodOutcome = new MethodOutcome();
-            methodOutcome.setResponseStatusCode(422);
-            methodOutcome.setCreated(false);
-            methodOutcome.setOperationOutcome(operationOutcome);
-            return methodOutcome;
-        }
-        Meta meta = new Meta();
-        String theId = UUID.randomUUID().toString();
-        theProcedure.setId(theId);
-        meta.setVersionId("1");
-        meta.setLastUpdated(new Date(System.currentTimeMillis()));
-        theProcedure.setMeta(meta);
-        return procedureRepository.createProcedure(theProcedure, theRequestDetails, theId);
+        String theId = resourceUtil.setId(theProcedure);
+        resourceUtil.setMeta(theProcedure);
+        return repository.createFhirResource(theProcedure, theRequestDetails, theId,
+                "procedure", theProcedure.getIdentifierFirstRep().getSystem(),
+                theProcedure.getIdentifierFirstRep().getValue());
     }
 
     public Procedure readProcedure(IdType theId) {
-        return procedureRepository.readProcedure(theId);
+        return repository.readFhirResource(theId, "procedure",
+                Procedure.class);
     }
 
     public MethodOutcome updateProcedure(IdType theId, Procedure theProcedure) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        Procedure procedureUpdated = procedureRepository.updateProcedure(theId, theProcedure);
-        if (procedureUpdated == null) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setDiagnostics("Error actualizando paciente");
-            return new MethodOutcome(operationOutcome).setCreated(false);
+        Procedure resourceUpdated = repository.updateFhirResource(theId, theProcedure,
+                "procedure",
+                Procedure.class);
+        if (resourceUpdated == null) {
+            OperationOutcome oo =  resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
+                    OperationOutcome.IssueType.PROCESSING, "Error actualizando recurso");
+            return resourceUtil.generateMethodOutcome(oo, 418, false);
         }
-        return new MethodOutcome().setResource(procedureUpdated).setId(procedureUpdated.getIdElement());
+        return resourceUtil.generateMethodOutcomeWithRes(resourceUpdated.getIdElement(), 200,
+                false, theProcedure);
     }
 
     public MethodOutcome deleteProcedure(IdType theId) {
-        return procedureRepository.deleteProcedure(theId);
+        return repository.deleteFhirResource(theId,
+                "procedure");
     }
-//    TODO(El return)
 
-    public OperationOutcome hasIdentifier(Procedure theProcedure) {
-        OperationOutcome operationOutcome = new OperationOutcome();
-        if (theProcedure.getIdentifier().isEmpty()) {
-            operationOutcome.addIssue()
-                    .setSeverity(OperationOutcome.IssueSeverity.ERROR)
-                    .setCode(OperationOutcome.IssueType.REQUIRED)
-                    .setDiagnostics("Identificador requerido");
-            return operationOutcome;
-        }
-        return null;
+    public List<Procedure> getProcedures(ReferenceParam patientRef) {
+        return repository.getAllResourcesByRef(patientRef, "procedure", Procedure.class);
     }
 }

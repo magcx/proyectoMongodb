@@ -18,18 +18,12 @@ import java.util.List;
 
 @RestController
 public class NutritionOrderResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private ResourceRepository<NutritionOrder> repository;
-    private ResourceUtil<NutritionOrder> resourceUtil;
-    private NutritionOrderService service;
+    private final NutritionOrderService service;
 
     public NutritionOrderResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.repository = new ResourceRepository<>(mongoTemplate, jsonParser);
-        this.resourceUtil = new ResourceUtil<>();
+        ResourceRepository<NutritionOrder> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<NutritionOrder> resourceUtil = new ResourceUtil<>();
         this.service = new NutritionOrderService(repository, resourceUtil);
     }
 
@@ -63,7 +57,7 @@ public class NutritionOrderResourceProvider implements IResourceProvider {
     }
 
     @Search
-    public List<NutritionOrder> searchCondition(@RequiredParam(name = NutritionOrder.SP_PATIENT) ReferenceParam patientRef){
+    public List<NutritionOrder> searchNutritionOrders(@RequiredParam(name = NutritionOrder.SP_PATIENT) ReferenceParam patientRef){
         return service.getNutritionOrders(patientRef);
     }
 }

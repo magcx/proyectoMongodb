@@ -4,27 +4,27 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
-import com.example.demo.repository.ProcedureRepository;
+import com.example.demo.repository.ResourceRepository;
 import com.example.demo.service.ProcedureService;
+import com.example.demo.service.ResourceUtil;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.Procedure;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class ProcedureResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private final ProcedureRepository procedureRepository;
-    private final ProcedureService procedureService;
+    private final ProcedureService service;
 
     public ProcedureResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.procedureRepository = new ProcedureRepository(mongoTemplate, jsonParser);
-        this.procedureService = new ProcedureService(procedureRepository);
+        ResourceRepository<Procedure> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<Procedure> resourceUtil = new ResourceUtil<>();
+        this.service = new ProcedureService(repository, resourceUtil);
     }
 
     @Override
@@ -37,28 +37,28 @@ public class ProcedureResourceProvider implements IResourceProvider {
     @Create
     public MethodOutcome createProcedure(@ResourceParam Procedure theProcedure, RequestDetails theRequestDetails) {
 
-        return procedureService.createProcedure(theProcedure, theRequestDetails);
+        return service.createProcedure(theProcedure, theRequestDetails);
     }
 
     //   OK
     @Read()
     public Procedure readProcedure(@IdParam IdType theId) {
-        return procedureService.readProcedure(theId);
+        return service.readProcedure(theId);
     }
 
     //    OK
     @Update
     public MethodOutcome updateProcedure(@IdParam IdType theId, @ResourceParam Procedure theProcedure) {
-        return procedureService.updateProcedure(theId, theProcedure);
+        return service.updateProcedure(theId, theProcedure);
     }
 
     @Delete
     public MethodOutcome deleteProcedure(@IdParam IdType theId) {
-        return procedureService.deleteProcedure(theId);
+        return service.deleteProcedure(theId);
     }
 
-//    @Search
-//    public OperationOutcome searchProcedure(){
-//        return null;
-//    }
+    @Search
+    public List<Procedure> searchProcedures(@RequiredParam(name = Procedure.SP_PATIENT) ReferenceParam patientRef){
+        return service.getProcedures(patientRef);
+    }
 }

@@ -24,15 +24,11 @@ public class NutritionOrderService {
 
 //   "The server SHALL populate the id, meta.versionId and meta.lastUpdated with the new correct values."
      public MethodOutcome createNutritionOrder(NutritionOrder theNutritionOrder, RequestDetails theRequestDetails) {
-         OperationOutcome operationOutcome = hasIdentifier(theNutritionOrder);
-         if (operationOutcome!= null) {
-             return resourceUtil.generateMethodOutcome(operationOutcome, 422, false);
-         }
          String theId = resourceUtil.setId(theNutritionOrder);
          resourceUtil.setMeta(theNutritionOrder);
          return repository.createFhirResource(theNutritionOrder, theRequestDetails, theId,
-                 "nutritionOrder",
-                 theNutritionOrder.getIdentifierFirstRep().getSystem(), theNutritionOrder.getIdentifierFirstRep().getValue());
+                 "nutritionOrder", theNutritionOrder.getIdentifierFirstRep().getSystem(),
+                 theNutritionOrder.getIdentifierFirstRep().getValue());
      }
 
      public NutritionOrder readNutritionOrder(IdType theId) {
@@ -57,17 +53,8 @@ public class NutritionOrderService {
          return repository.deleteFhirResource(theId,
                  "nutritionOrder");
      }
-//    TODO(El return)
 
     public List<NutritionOrder> getNutritionOrders(ReferenceParam patientRef) {
         return repository.getAllResourcesByRef(patientRef,"nutritionOrder", NutritionOrder.class);
     }
-
-     public OperationOutcome hasIdentifier(NutritionOrder theNutritionOrder) {
-         if (theNutritionOrder.getIdentifier().isEmpty()) {
-             return resourceUtil.generateOperationOutcome(OperationOutcome.IssueSeverity.ERROR,
-                     OperationOutcome.IssueType.REQUIRED, "Identificador requerido");
-         }
-         return null;
-     }
 }

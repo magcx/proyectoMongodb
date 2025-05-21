@@ -16,20 +16,13 @@ import java.util.List;
 
 @RestController
 public class PatientResourceProvider implements IResourceProvider {
-    private final JsonParser jsonParser;
-    private final MongoTemplate mongoTemplate;
-    private ResourceRepository<Patient> patientRepository;
-    private ResourceUtil<Patient> patientServiceUtil;
-    private PatientService patientService;
-
+    private final PatientService service;
 
     public PatientResourceProvider(JsonParser jsonParser, MongoTemplate mongoTemplate) {
         super();
-        this.jsonParser = jsonParser;
-        this.mongoTemplate = mongoTemplate;
-        this.patientRepository = new ResourceRepository<>(mongoTemplate, jsonParser);
-        this.patientServiceUtil = new ResourceUtil<>();
-        this.patientService = new PatientService(patientRepository, patientServiceUtil);
+        ResourceRepository<Patient> repository = new ResourceRepository<>(mongoTemplate, jsonParser);
+        ResourceUtil<Patient> resourceUtil = new ResourceUtil<>();
+        this.service = new PatientService(repository, resourceUtil);
     }
 
     @Override
@@ -41,28 +34,28 @@ public class PatientResourceProvider implements IResourceProvider {
 //   Para devolver 201 Created necesita .setCreated true, .setID y setResource
     @Create
     public MethodOutcome createPatient(@ResourceParam Patient thePatient, RequestDetails theRequestDetails) {
-        return patientService.createPatient(thePatient, theRequestDetails);
+        return service.createPatient(thePatient, theRequestDetails);
     }
 
     //   OK
     @Read()
     public Patient readPatient(@IdParam IdType theId) {
-        return patientService.readPatient(theId);
+        return service.readPatient(theId);
     }
 
     //    OK
     @Update
     public MethodOutcome updatePatient(@IdParam IdType theId, @ResourceParam Patient thePatient) {
-        return patientService.updatePatient(theId, thePatient);
+        return service.updatePatient(theId, thePatient);
     }
 
     @Delete
     public MethodOutcome deletePatient(@IdParam IdType theId) {
-        return patientService.deletePatient(theId);
+        return service.deletePatient(theId);
     }
 
     @Search
     public List<Patient> searchPatient(){
-        return patientService.getPatients();
+        return service.getPatients();
     }
 }

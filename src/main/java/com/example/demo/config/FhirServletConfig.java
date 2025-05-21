@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class FhirServletConfig {
-//TODO(JWT, hapi fhir LoggingInterceptor class, see docs)
     @Bean
     public ServletRegistrationBean<RestfulServer> fhirServletRegistration(RestfulServer restfulServer) {
         ServletRegistrationBean<RestfulServer> servletRegistrationBean = new ServletRegistrationBean<>(restfulServer,
