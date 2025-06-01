@@ -64,7 +64,13 @@ public class ResourceRepository <T extends DomainResource> {
     //    OK
     public <R extends DomainResource> R updateFhirResource(IdType theId, R theResource, String resourceCollection,
                                                          Class<R> resourceClass){
-        R resourceFound = readFhirResource(theId, resourceCollection, resourceClass);
+        String versionId = Integer.toString(Integer.parseInt(theResource.getMeta().getVersionId()) + 1);
+        Meta meta = new Meta();
+        meta.setVersionId(versionId);
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
+        calendar.setTime(new Date());
+        meta.setLastUpdated(calendar.getTime());
+        theResource.setMeta(meta);
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
         Document resourceDoc = Document.parse(jsonParser.encodeResourceToString(theResource));
         FindAndReplaceOptions options = new FindAndReplaceOptions().returnNew();
@@ -72,15 +78,7 @@ public class ResourceRepository <T extends DomainResource> {
         if (updatedDoc == null) {
             throw new ResourceNotFoundException(theId);
         }
-        R updatedResource = jsonParser.parseResource(resourceClass, updatedDoc.toJson());
-        String versionId = String.valueOf((Integer.parseInt(resourceFound.getMeta().getVersionId())) + 1);
-        Meta meta = new Meta();
-        meta.setVersionId(versionId);
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/Madrid"));
-        calendar.setTime(new Date());
-        meta.setLastUpdated(calendar.getTime());
-        updatedResource.setMeta(meta);
-        return updatedResource;
+        return jsonParser.parseResource(resourceClass, updatedDoc.toJson());
     }
 
     public MethodOutcome deleteFhirResource(IdType theId, String resourceCollection){
