@@ -47,7 +47,10 @@ public class FHIRServer extends RestfulServer {
                 new AllergyIntoleranceResourceProvider(jsonParser, mongoTemplate),
                 new NutritionOrderResourceProvider(jsonParser, mongoTemplate),
                 new ConditionResourceProvider(jsonParser, mongoTemplate),
-                new MedicationStatementResourceProvider(jsonParser, mongoTemplate)
+                new MedicationStatementResourceProvider(jsonParser, mongoTemplate),
+                new GoalResourceProvider(jsonParser, mongoTemplate),
+                new TaskResourceProvider(jsonParser, mongoTemplate)
+//                new DeviceUseStatementResourceProvider
         );
         FifoMemoryPagingProvider pagingProvider = new FifoMemoryPagingProvider(10);
         pagingProvider.setDefaultPageSize(10);

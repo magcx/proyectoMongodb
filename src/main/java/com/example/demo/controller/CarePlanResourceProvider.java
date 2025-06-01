@@ -4,6 +4,7 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.server.*;
 import com.example.demo.repository.ResourceRepository;
@@ -16,6 +17,8 @@ import com.example.demo.service.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+
+import static org.hl7.fhir.r4.model.CarePlan.SP_ACTIVITY_DATE;
 
 @RestController
 public class CarePlanResourceProvider implements IResourceProvider {
@@ -63,5 +66,12 @@ public class CarePlanResourceProvider implements IResourceProvider {
     public List<CarePlan> searchCarePlans(@RequiredParam(name = CarePlan.SP_PATIENT)
                                           ReferenceParam patientRef) {
         return service.getCarePlans(patientRef);
+    }
+
+    @Search
+    public List<CarePlan> getResourcesByScheduledDay (@RequiredParam(name = CarePlan.SP_PATIENT)
+                                                          ReferenceParam patientRef, @RequiredParam(name = SP_ACTIVITY_DATE)
+                                                      DateParam activityDate) {
+        return service.getResourcesByScheduledDay(patientRef, activityDate);
     }
 }

@@ -3,8 +3,11 @@ package com.example.demo.repository;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import com.example.demo.util.ResourceUtil;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.*;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
@@ -14,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,7 +34,7 @@ public class ResourceRepository <T extends DomainResource> {
     public MethodOutcome createFhirResource(T theResource, RequestDetails theRequestDetails, String theId,
                                             String resourceCollection, String identifierSystem, String identifierValue) {
         if (theResource.getResourceType() == ResourceType.Patient){
-            if (resourceExists(identifierSystem, identifierValue, resourceCollection) != null) {
+            if (resourceExists (identifierSystem, identifierValue, resourceCollection) != null) {
                 OperationOutcome operationOutcome = new OperationOutcome();
                 operationOutcome.addIssue().setCode(OperationOutcome.IssueType.DUPLICATE)
                         .setDiagnostics("Duplicate");
@@ -51,7 +55,7 @@ public class ResourceRepository <T extends DomainResource> {
 
     public <R extends DomainResource> R readFhirResource(IdType theId, String resourceCollection, Class<R> resourceClass) {
         Criteria criteria = Criteria.where("id").is(theId.getIdPart());
-        String json = mongoTemplate.findOne(new Query(criteria), String.class,resourceCollection);
+        String json = mongoTemplate.findOne(new Query(criteria), String.class, resourceCollection);
         if (json == null) {
             throw new ResourceNotFoundException(theId);
         }
@@ -91,6 +95,13 @@ public class ResourceRepository <T extends DomainResource> {
         return new MethodOutcome().setId(theId);
     }
 
+    public String resourceExists(String identifierSystem, String identifierValue, String resourceCollection){
+        Criteria criteria = Criteria.where("identifier").elemMatch(
+                Criteria.where("system").is(identifierSystem)
+                        .and("value").is(identifierValue));
+        return mongoTemplate.findOne(new Query(criteria), String.class, resourceCollection);
+    }
+
     public <R extends DomainResource> List<R> getAllResourcesByType(String resourceCollection, Class<R> resourceClass) {
         List<String> jsonResource = mongoTemplate.findAll(String.class, resourceCollection);
         if (jsonResource.isEmpty()) {
@@ -101,18 +112,22 @@ public class ResourceRepository <T extends DomainResource> {
                 .collect(Collectors.toList());
     }
 
-    public String resourceExists(String identifierSystem, String identifierValue, String resourceCollection){
-        Criteria criteria = Criteria.where("identifier").elemMatch(
-                Criteria.where("system").is(identifierSystem)
-                        .and("value").is(identifierValue));
-        return mongoTemplate.findOne(new Query(criteria), String.class, resourceCollection);
-    }
-
-    public <R extends DomainResource> List<R> getAllResourcesByRef(ReferenceParam patientRef, String resourceCollection, Class<R> resourceClass) {
+    public <R extends DomainResource> List<R> getAllResourcesByRef(ReferenceParam patientRef,
+                                                                   String resourceCollection, Class<R> resourceClass) {
         Criteria criteria = new Criteria().orOperator(
                 Criteria.where("patient.reference").is("Patient" + "/" + patientRef.getIdPart()),
                 Criteria.where("subject.reference").is("Patient" + "/" + patientRef.getIdPart()));
-        List<String> resourceJson = mongoTemplate.find(new Query(criteria), String.class,resourceCollection);
+
+        List<String> resourceJson = findQuery(resourceCollection, criteria);
+        if (resourceJson.isEmpty()) throw new ResourceNotFoundException("No resources found");
+        return resourceJson.stream()
+                .map(String -> jsonParser.parseResource(resourceClass, String))
+                .collect(Collectors.toList());
+    }
+
+    public <R extends DomainResource> List<R> getAllResourcesByIdentifier(TokenParam identifier, String resourceCollection, Class<R> resourceClass) {
+        Criteria criteria = Criteria.where("identifier.value").regex("^" + identifier.getValue());
+        List<String> resourceJson = findQuery(resourceCollection, criteria);
         if (resourceJson.isEmpty()) {
             throw new ResourceNotFoundException("No resources found");
         }
@@ -121,9 +136,66 @@ public class ResourceRepository <T extends DomainResource> {
                 .collect(Collectors.toList());
     }
 
+    //TODO(Unificar métodos find pasando por parámetro la query)
+    public <R extends DomainResource> List<R> getResourcesByScheduledDay(ReferenceParam patientRef, String resourceCollection,
+                                                     Class<R> resourceClass, DateParam date) {
+        String dateOnly  = ResourceUtil.formatDate(date.getValue()).split("T")[0];
+        Criteria criteria = new Criteria().andOperator(
+                Criteria.where("for.reference").is("Patient" + "/" + patientRef.getIdPart()),
+                Criteria.where("restriction.period.start").regex("^" + dateOnly));
+
+        List<String> resourceJson = findQuery(resourceCollection, criteria);
+        if (resourceJson.isEmpty()) {
+            throw new ResourceNotFoundException("No resources found");
+        }
+        return resourceJson.stream()
+                .map(String -> jsonParser.parseResource(resourceClass, String))
+                .collect(Collectors.toList());
+    }
+
+    public <R extends DomainResource> List<R> getAllResourcesByCategory (ReferenceParam patientRef, TokenParam categoryRef,
+                                                                        String resourceCollection, Class<R> resourceClass) {
+        Criteria criteria = new Criteria().orOperator(
+                        Criteria.where("patient.reference").is("Patient/" + patientRef.getIdPart()),
+                        Criteria.where("subject.reference").is("Patient/" + patientRef.getIdPart())
+                )
+                .andOperator(
+                        Criteria.where("category.coding").elemMatch(
+                                Criteria.where("code").is(categoryRef.getValue())
+                        )
+                );
+
+        List<String> resourceJson = findQuery(resourceCollection, criteria);
+        if (resourceJson.isEmpty()) throw new ResourceNotFoundException("No resources found");
+        return resourceJson.stream()
+                .map(String -> jsonParser.parseResource(resourceClass, String))
+                .collect(Collectors.toList());
+    }
+
+
+    private List<String> findQuery(String resourceCollection, Criteria criteria) {
+        return mongoTemplate.find(new Query(criteria), String.class, resourceCollection);
+    }
+
     public void storeSecretKey(String id, SecretKey secretKey){
         String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
-        Document key = new Document("id :", id).append("key: ", encodedKey);
-        mongoTemplate.insert(key, "dek");
+        Document keyDoc = new Document("id", id).append("key", encodedKey);
+        mongoTemplate.insert(keyDoc, "dek");
+    }
+
+    public SecretKey getSecretKey(String id) {
+        Query query = new Query(Criteria.where("id").is(id));
+        Document keyDoc = mongoTemplate.findOne(query, Document.class, "dek");
+        if (keyDoc == null || !keyDoc.containsKey("key")) {
+            throw new ResourceNotFoundException(id);
+        }
+        String encodedKey = keyDoc.getString("key");
+        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
+        return new SecretKeySpec(decodedKey, "AES");
+    }
+
+    public boolean deleteSecretKey(String id) {
+        Criteria criteria = Criteria.where("id").is(id);
+        return (mongoTemplate.remove(new Query(criteria),"dek")).getDeletedCount() != 0;
     }
 }

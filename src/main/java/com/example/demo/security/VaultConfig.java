@@ -25,4 +25,4 @@ public class VaultConfig extends AbstractVaultConfiguration {
     public VaultTemplate vaultTemplate(VaultEndpoint vaultEndpoint, ClientAuthentication clientAuthentication ) {
         return new VaultTemplate(vaultEndpoint,clientAuthentication);
     }
-}git
+}

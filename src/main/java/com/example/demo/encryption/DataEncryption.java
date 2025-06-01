@@ -1,8 +1,14 @@
 package com.example.demo.encryption;
 
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import org.bson.Document;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
@@ -32,11 +38,16 @@ public class DataEncryption {
         return null;
     }
 
-    public static String decrypt(String encryptedData, SecretKey key) throws Exception {
-        Cipher cipher = Cipher.getInstance(ALGORITHM);
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        byte[] decoded = Base64.getDecoder().decode(encryptedData);
-        byte[] decrypted = cipher.doFinal(decoded);
-        return new String(decrypted);
+    public static String decrypt(String encryptedData, SecretKey key) {
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            byte[] decoded = Base64.getDecoder().decode(encryptedData);
+            byte[] decrypted = cipher.doFinal(decoded);
+            return new String(decrypted);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

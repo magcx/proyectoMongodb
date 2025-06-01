@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.param.DateParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import com.example.demo.repository.ResourceRepository;
 import com.example.demo.util.ResourceUtil;
@@ -54,4 +55,10 @@ public class CarePlanService {
     public List<CarePlan> getCarePlans(ReferenceParam patientRef) {
         return repository.getAllResourcesByRef(patientRef, "carePlan", CarePlan.class);
     }
+
+    public List<CarePlan> getResourcesByScheduledDay(ReferenceParam patientRef, DateParam fhirDayOfWeek) {
+      return repository.getResourcesByScheduledDay(patientRef, "carePlan", CarePlan.class, fhirDayOfWeek);
+    }
+
+
 }

@@ -4,7 +4,9 @@ import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
+import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.repository.ResourceRepository;
 import com.example.demo.service.ConditionService;
@@ -59,5 +61,9 @@ public class ConditionResourceProvider implements IResourceProvider {
     @Search
     public List<Condition> searchCondition(@RequiredParam(name = Condition.SP_PATIENT) ReferenceParam patientRef){
         return service.getConditions(patientRef);
+    }
+    @Search
+    public List<Condition> searchConditionByIdentifier(@RequiredParam(name = Condition.SP_IDENTIFIER) TokenParam identifierRef){
+        return service.getConditionsByIdentifier(identifierRef);
     }
 }

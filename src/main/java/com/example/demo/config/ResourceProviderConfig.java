@@ -2,6 +2,7 @@ package com.example.demo.config;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
+import ca.uhn.fhir.context.support.IValidationSupport;
 import ca.uhn.fhir.parser.JsonParser;
 import ca.uhn.fhir.validation.FhirValidator;
 import org.hl7.fhir.common.hapi.validation.support.*;
@@ -24,13 +25,15 @@ public class ResourceProviderConfig {
     @Bean
     public FhirValidator fhirValidator(FhirContext ctx) {
         FhirValidator fhirValidator = ctx.newValidator();
+        UnknownCodeSystemWarningValidationSupport unksw = new UnknownCodeSystemWarningValidationSupport(ctx);
+        unksw.setNonExistentCodeSystemSeverity(IValidationSupport.IssueSeverity.ERROR);
         ValidationSupportChain validationSupportChain = new ValidationSupportChain(
                 new DefaultProfileValidationSupport(ctx), //Validación de StructureDefinition
                 new SnapshotGeneratingValidationSupport(ctx), //Validación y generación de perfiles
                 new CommonCodeSystemsTerminologyService(ctx), //Validación de CodeSystem
                 new RemoteTerminologyServiceValidationSupport(ctx, "http://localhost:8080/fhir/"),
                 new InMemoryTerminologyServerValidationSupport(ctx), //Validación de CodeSystem y ValueSet desde la memoria
-                new UnknownCodeSystemWarningValidationSupport(ctx)
+                unksw
         );
         CachingValidationSupport cachingValidationSupport = new CachingValidationSupport(validationSupportChain);
         //Contenedor de la estructura del validador

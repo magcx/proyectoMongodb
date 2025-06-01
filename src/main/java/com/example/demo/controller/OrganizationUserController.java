@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.OrganizationUser;
-import com.example.demo.service.OrganizationUserService;
+import com.example.demo.security.OrganizationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

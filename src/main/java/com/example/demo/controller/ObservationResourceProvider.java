@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.annotation.*;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.example.demo.util.ResourceUtil;
 import org.hl7.fhir.r4.model.IdType;
@@ -26,6 +27,7 @@ public class ObservationResourceProvider implements IResourceProvider {
         ResourceUtil<Observation> resourceUtil = new ResourceUtil<>();
         this.service = new ObservationService(repository, resourceUtil);
     }
+
     @Override
     public Class<Observation> getResourceType() {
         return Observation.class;
@@ -45,14 +47,22 @@ public class ObservationResourceProvider implements IResourceProvider {
     public MethodOutcome updateObservation(@IdParam IdType theId, @ResourceParam Observation theObservation) {
         return service.updateObservation(theId, theObservation);
     }
-//    @Search
+
+    //    @Search
     @Delete
     public MethodOutcome deleteObservation(@IdParam IdType theId) {
         return service.deleteObservation(theId);
     }
 
+
     @Search
-    public List<Observation> searchObservations(@RequiredParam(name = Observation.SP_PATIENT) ReferenceParam patientRef) {
-        return service.getObservations(patientRef);
+    public List<Observation> searchObservationByIdentifier(@RequiredParam(name = Observation.SP_IDENTIFIER) TokenParam identifierRef) {
+        return service.getObservationsByIdentifier(identifierRef);
+    }
+
+    @Search
+    public List<Observation> searchObservationsByCategory(@RequiredParam(name = Observation.SP_PATIENT) ReferenceParam patientRef,
+                                                          @RequiredParam(name = Observation.SP_CATEGORY) TokenParam categoryRef) {
+        return service.getObservations(patientRef, categoryRef);
     }
 }

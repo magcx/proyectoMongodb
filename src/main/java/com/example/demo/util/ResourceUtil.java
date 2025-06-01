@@ -1,12 +1,13 @@
 package com.example.demo.util;
 
 import ca.uhn.fhir.rest.api.MethodOutcome;
-import org.hl7.fhir.r4.model.DomainResource;
-import org.hl7.fhir.r4.model.IdType;
-import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.*;
 import org.springframework.stereotype.Component;
 
+import java.time.DayOfWeek;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.UUID;
 
@@ -60,5 +61,29 @@ public class ResourceUtil<T extends DomainResource> {
         String theId = UUID.randomUUID().toString();
         theResource.setId(theId);
         return theId;
+    }
+
+    public static String dateToDayOfWeek(Date date) {
+        System.out.println(date);
+        DayOfWeek dayOfWeek = date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .getDayOfWeek();
+
+        return switch (dayOfWeek) {
+            case MONDAY -> "mon";
+            case TUESDAY -> "tue";
+            case WEDNESDAY -> "wed";
+            case THURSDAY -> "thu";
+            case FRIDAY -> "fri";
+            case SATURDAY -> "sat";
+            case SUNDAY -> "sun";
+        };
+    }
+
+    public static String formatDate(Date date){
+        ZonedDateTime zonedDateTime = date.toInstant().atZone(ZoneId.of("Europe/Madrid"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+        return zonedDateTime.format(formatter);
     }
 }

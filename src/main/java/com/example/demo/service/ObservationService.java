@@ -3,6 +3,7 @@ package com.example.demo.service;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import com.example.demo.repository.ResourceRepository;
 import com.example.demo.util.ResourceUtil;
 import org.hl7.fhir.r4.model.*;
@@ -51,7 +52,11 @@ public class ObservationService {
                 "observation");
     }
 
-    public List<Observation> getObservations(ReferenceParam patientRef) {
-        return repository.getAllResourcesByRef(patientRef, "observation", Observation.class);
+    public List<Observation> getObservations(ReferenceParam patientRef, TokenParam categoryRef) {
+        return repository.getAllResourcesByCategory (patientRef, categoryRef, "observation", Observation.class);
+    }
+
+    public List<Observation> getObservationsByIdentifier(TokenParam identifierRef) {
+        return repository.getAllResourcesByIdentifier(identifierRef, "observation", Observation.class);
     }
 }
