@@ -64,7 +64,6 @@ public class ResourceUtil<T extends DomainResource> {
     }
 
     public static String dateToDayOfWeek(Date date) {
-        System.out.println(date);
         DayOfWeek dayOfWeek = date.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate()
